@@ -1,0 +1,171 @@
+#include "packet_reader.hpp"
+
+namespace packet_reader{
+
+int Packet_Reader::linkhdrlen = 0;
+//std::deque<std::unique_ptr<std::string>> Packet_Reader::packets;
+std::queue<std::unique_ptr<std::string>> Packet_Reader::packets;
+
+Packet_Reader::Packet_Reader(const std::string& name) {
+	handle = pcap_open_offline(name.c_str(), errbuf);
+	if (handle == NULL) std::cout << "Could not open file " << name << ": " << errbuf << "\n";
+	get_link_header_len(handle);
+}
+Packet_Reader::~Packet_Reader(){
+	pcap_close(handle);
+}
+void Packet_Reader::set_filter(const std::string& filter) {
+	/* Lets try and compile the program.. non-optimized */
+	if(pcap_compile(handle, &fp, filter.c_str(), 0, PCAP_NETMASK_UNKNOWN) == -1) std::cout << "Error calling pcap_compile\n";
+
+	/* set the compiled program as the filter */
+	if(pcap_setfilter(handle,&fp) == -1) std::cout << "Error setting filter\n";
+}
+void Packet_Reader::get_link_header_len(pcap_t* handle)
+{
+    	int linktype;
+ 
+    	// Determine the datalink layer type.
+    	if ((linktype = pcap_datalink(handle)) == PCAP_ERROR) {
+		printf("pcap_datalink(): %s\n", pcap_geterr(handle));
+		return;
+   	}
+ 
+    	// Set the datalink layer header size.
+    	switch (linktype)
+    	{
+	case DLT_LINUX_SLL:
+		linkhdrlen = 16;
+		break;
+
+    	case DLT_NULL:
+		linkhdrlen = 4;
+		break;
+ 
+    	case DLT_EN10MB:
+		linkhdrlen = 14;
+		break;
+ 
+    	case DLT_SLIP:
+    	case DLT_PPP:
+		linkhdrlen = 24;
+		break;
+ 
+    	default:
+		printf("Unsupported datalink (%d)\n", linktype);
+		linkhdrlen = 0;
+    	}
+}
+void Packet_Reader::processing (int count) const {
+	if (pcap_loop(handle, count, packet_handler, (u_char*)NULL) == PCAP_ERROR)
+		std::cout << "pcap_loop failed: " << pcap_geterr(handle) << "\n";
+}
+void Packet_Reader::packet_handler(u_char *user, const struct pcap_pkthdr *packethdr, const u_char *packetptr) {
+	std::stringstream buffer;
+	struct ip* iphdr;
+	struct icmp* icmphdr;
+	struct tcphdr* tcphdr;
+	struct udphdr* udphdr;
+	char iphdrInfo[256];
+	char srcip[256];
+	char dstip[256];
+	size_t packetptr_len = packethdr->len;
+	 
+	// Skip the datalink layer header and get the IP header fields.
+	packetptr += linkhdrlen;
+	packetptr_len -= linkhdrlen;
+	iphdr = (struct ip*)packetptr;
+	strcpy(srcip, inet_ntoa(iphdr->ip_src));
+	strcpy(dstip, inet_ntoa(iphdr->ip_dst));
+	sprintf(iphdrInfo, "ID:%d TOS:0x%x, TTL:%d IpLen:%d DgLen:%d",
+	ntohs(iphdr->ip_id), iphdr->ip_tos, iphdr->ip_ttl,
+	4*iphdr->ip_hl, ntohs(iphdr->ip_len));
+	 
+	// Advance to the transport layer header then parse and display
+	// the fields based on the type of hearder: tcp, udp or icmp.
+	packetptr += 4*iphdr->ip_hl;
+	packetptr_len -= 4*iphdr->ip_hl;
+	switch (iphdr->ip_p)
+	{
+	case IPPROTO_TCP:
+		tcphdr = (struct tcphdr*)packetptr;
+		/*printf("TCP  %s:%d -> %s:%d\n", srcip, ntohs(tcphdr->th_sport),
+		       dstip, ntohs(tcphdr->th_dport));
+		printf("%s\n", iphdrInfo);
+		printf("%c%c%c%c%c%c Seq: 0x%x Ack: 0x%x Win: 0x%x TcpLen: %d\n",
+		       (tcphdr->th_flags & TH_URG ? 'U' : '*'),
+		       (tcphdr->th_flags & TH_ACK ? 'A' : '*'),
+		       (tcphdr->th_flags & TH_PUSH ? 'P' : '*'),
+		       (tcphdr->th_flags & TH_RST ? 'R' : '*'),
+		       (tcphdr->th_flags & TH_SYN ? 'S' : '*'),
+		       (tcphdr->th_flags & TH_SYN ? 'F' : '*'),
+		       ntohl(tcphdr->th_seq), ntohl(tcphdr->th_ack),
+		       ntohs(tcphdr->th_win), 4*tcphdr->th_off);
+		printf("+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+\n\n");
+		*/
+		packetptr += sizeof(tcphdr);
+		packetptr_len -= sizeof(tcphdr);
+		break;
+	 
+	case IPPROTO_UDP:
+		udphdr = (struct udphdr*)packetptr;
+		printf("UDP  %s:%d -> %s:%d\n", srcip, ntohs(udphdr->uh_sport),
+		       dstip, ntohs(udphdr->uh_dport));
+		printf("%s\n", iphdrInfo);
+		    printf("+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+\n\n");
+		
+		packetptr += sizeof(udphdr);
+		packetptr_len -= sizeof(udphdr);
+		break;
+	 
+	case IPPROTO_ICMP:
+		icmphdr = (struct icmp*)packetptr;
+		/*printf("ICMP %s -> %s\n", srcip, dstip);
+		printf("%s\n", iphdrInfo);
+		printf("Type:%d Code:%d ID:%d Seq:%d\n", icmphdr->icmp_type, icmphdr->icmp_code,
+		       ntohs(icmphdr->icmp_hun.ih_idseq.icd_id), ntohs(icmphdr->icmp_hun.ih_idseq.icd_seq));
+		    printf("+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+\n\n");
+		*/
+		packetptr += sizeof(icmphdr);
+		packetptr_len -= sizeof(icmphdr);
+		break;
+	}
+	std::cout << "Recieved Packet Size: " << packethdr->len << "\nPacket Size SIP: " << packetptr_len << "\n";
+	/*for (int i = 0; i < packetptr_len; ++i) {
+		std::cout << packetptr[i];
+		//if ( ((i+1)%16 == 0 && i != 0) || i == packethdr->len-1) std::cout << "\n";
+	}
+	*/
+	for (int i = 0; i < packetptr_len; ++i) {
+		//std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(packetptr[i]) << " ";
+		buffer << packetptr[i];
+	}
+	std::cout << "-------------------\n";
+	// std::unique_ptr<std::string> pStr = std::make_unique<std::string>(buffer.str());
+	std::unique_ptr<std::string> pStr(new std::string(buffer.str()));
+	// packets.push(std::move(pStr));
+	packets.push(std::move(pStr));
+	buffer.str("");
+}
+std::unique_ptr<std::string> Packet_Reader::get_packet_front() const{
+	std::unique_ptr<std::string> value;    
+	if (get_size_deque() == 0)  value = nullptr;
+	else {
+		value = std::move(packets.front());
+		packets.pop();
+	} 
+	return value;
+}
+size_t Packet_Reader::get_size_deque() const{
+	return packets.size();
+}
+void Packet_Reader::read_in_file(const std::string& name) const {
+	std::ofstream out;
+	out.open(name);
+	for (int i = 0; i != get_size_deque(); ++i) {
+		out << *get_packet_front();
+	}
+	out.close();
+}
+}
+
