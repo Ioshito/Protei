@@ -3,6 +3,7 @@
 #include <pjsip.h>
 #include <fstream>
 #include <deque>
+#include <pj/log.h>
 
 #define SIZE_BUF 1000
 
