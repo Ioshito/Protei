@@ -2,6 +2,10 @@
 
 namespace packet_reader{
 
+long local_buf = 0;
+long buf_usec = 0;
+int flag = 1;
+
 int Packet_Reader::linkhdrlen = 0;
 //std::deque<std::unique_ptr<std::string>> Packet_Reader::packets;
 std::queue<std::unique_ptr<std::string>> Packet_Reader::packets;
@@ -61,6 +65,29 @@ void Packet_Reader::processing (int count) const {
 		std::cout << "pcap_loop failed: " << pcap_geterr(handle) << "\n";
 }
 void Packet_Reader::packet_handler(u_char *user, const struct pcap_pkthdr *packethdr, const u_char *packetptr) {
+	if (flag) {
+		local_buf = packethdr->ts.tv_sec;
+		buf_usec = packethdr->ts.tv_usec;
+		flag = 0;
+	}
+
+	/* header->ts содержит время прибытия пакета */
+	struct tm *ltime;
+	char timestr[16];
+	time_t local_tv_sec;
+
+	/* Преобразуем timestamp в локальное время */
+	local_tv_sec = packethdr->ts.tv_sec;
+	ltime = localtime(&local_tv_sec);
+	strftime(timestr, sizeof timestr, "%H:%M:%S", ltime);
+
+
+	/* Выводим время прибытия пакета */
+	printf("Время прибытия пакета: %s.%06ld\n", timestr, packethdr->ts.tv_usec);
+	printf("A: %07ld; B: %07ld\n", packethdr->ts.tv_sec, packethdr->ts.tv_usec);
+	long result = packethdr->ts.tv_sec*1000000 - local_buf*1000000 + packethdr->ts.tv_usec - buf_usec;
+	printf("Разница: %d.%06ld\n", result/1000000, result%1000000);
+
 	std::stringstream buffer;
 	struct ip* iphdr;
 	struct icmp* icmphdr;
