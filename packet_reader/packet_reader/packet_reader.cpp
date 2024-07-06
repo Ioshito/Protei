@@ -2,13 +2,14 @@
 
 namespace packet_reader{
 
-long local_buf = 0;
+long buf_sec = 0;
 long buf_usec = 0;
 int flag = 1;
 
 int Packet_Reader::linkhdrlen = 0;
+
 //std::deque<std::unique_ptr<std::string>> Packet_Reader::packets;
-std::queue<std::unique_ptr<std::string>> Packet_Reader::packets;
+std::queue<std::unique_ptr<Time_and_Packet>> Packet_Reader::packets;
 
 Packet_Reader::Packet_Reader(const std::string& name) {
 	handle = pcap_open_offline(name.c_str(), errbuf);
@@ -66,7 +67,7 @@ void Packet_Reader::processing (int count) const {
 }
 void Packet_Reader::packet_handler(u_char *user, const struct pcap_pkthdr *packethdr, const u_char *packetptr) {
 	if (flag) {
-		local_buf = packethdr->ts.tv_sec;
+		buf_sec = packethdr->ts.tv_sec;
 		buf_usec = packethdr->ts.tv_usec;
 		flag = 0;
 	}
@@ -85,7 +86,7 @@ void Packet_Reader::packet_handler(u_char *user, const struct pcap_pkthdr *packe
 	/* Выводим время прибытия пакета */
 	printf("Время прибытия пакета: %s.%06ld\n", timestr, packethdr->ts.tv_usec);
 	printf("A: %07ld; B: %07ld\n", packethdr->ts.tv_sec, packethdr->ts.tv_usec);
-	long result = packethdr->ts.tv_sec*1000000 - local_buf*1000000 + packethdr->ts.tv_usec - buf_usec;
+	long result = packethdr->ts.tv_sec*1000000 - buf_sec*1000000 + packethdr->ts.tv_usec - buf_usec;
 	printf("Разница: %d.%06ld\n", result/1000000, result%1000000);
 
 	std::stringstream buffer;
@@ -169,13 +170,15 @@ void Packet_Reader::packet_handler(u_char *user, const struct pcap_pkthdr *packe
 	}
 	std::cout << "-------------------\n";
 	// std::unique_ptr<std::string> pStr = std::make_unique<std::string>(buffer.str());
-	std::unique_ptr<std::string> pStr(new std::string(buffer.str()));
+	//std::unique_ptr<std::string> pStr(new std::string(buffer.str()));
+	std::unique_ptr<Time_and_Packet> pStr(new Time_and_Packet{result/1000000, result%1000000, buffer.str()});
+	
 	// packets.push(std::move(pStr));
 	packets.push(std::move(pStr));
 	buffer.str("");
 }
-std::unique_ptr<std::string> Packet_Reader::get_packet_front() const{
-	std::unique_ptr<std::string> value;    
+std::unique_ptr<Time_and_Packet> Packet_Reader::get_packet_front() const{
+	std::unique_ptr<Time_and_Packet> value;    
 	if (get_size_deque() == 0)  value = nullptr;
 	else {
 		value = std::move(packets.front());
@@ -190,7 +193,7 @@ void Packet_Reader::read_in_file(const std::string& name) const {
 	std::ofstream out;
 	out.open(name);
 	for (int i = 0; i != get_size_deque(); ++i) {
-		out << *get_packet_front();
+		out << get_packet_front()->packet;
 	}
 	out.close();
 }
