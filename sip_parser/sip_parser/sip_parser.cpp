@@ -53,7 +53,7 @@ void Sip_Parser::parsing(char *packet_msg, long sec, long usec, std::string& ip,
 		Call_ID call_id = call_id_value;
 		if (len > 0) std::cout << call_id << "; Length: " << call_id.length() << "\n";
 
-		Info_and_Sip_Packet buf_info {sec, usec, std::move(ip), port, *msg};
+		Info_and_Sip_Packet buf_info {sec, usec, std::move(ip), port, msg};
 		if (auto search = sip_packets.find(call_id); search != sip_packets.end()) {
 			//добавить условие по флагу стороны
 			if (search->second.ip == ip && search->second.port == port) {
@@ -105,18 +105,20 @@ void Sip_Parser::read_in_files(const std::string& name) {
 		for (auto elem : key_and_sides.a) {
 			auto mess = elem.msg;
 			//std::cout << "ABBA "<< msg.line.req.method.name.ptr;
-			pjsip_msg_print(&mess, buf, SIZE_BUF);
+			pjsip_msg_print(mess, buf, SIZE_BUF);
 			for (int i = 0; i < strlen(buf); ++i) {
 				out_a << buf[i];
 				std::cout << buf[i];
 			}
+			out_a << "\r\n";
 		}
 		for (auto elem : key_and_sides.b) {
 			auto mess = elem.msg;
-			pjsip_msg_print(&mess, buf, SIZE_BUF);
+			pjsip_msg_print(mess, buf, SIZE_BUF);
 			for (int i = 0; i < strlen(buf); ++i)
 				out_b << buf[i];
 		}
+		out_b << "\r\n";
 	}
 	
 	out_a.close();

@@ -20,7 +20,7 @@ struct Info_and_Sip_Packet {
 	long usec;
 	std::string ip;
 	int port;
-	pjsip_msg msg;
+	pjsip_msg *msg;
 };
 
 struct Key_and_Sides {
