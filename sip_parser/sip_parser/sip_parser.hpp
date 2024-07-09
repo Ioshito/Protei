@@ -14,6 +14,7 @@ class Sip_Parser {
 		Sip_Parser();
 		void parsing(char *);
 		void read_in_file(const std::string&);
+		void read_in_file(const std::string&, long, long);
 		char *packet_msg;
 
 	private:

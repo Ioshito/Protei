@@ -59,6 +59,22 @@ void Sip_Parser::read_in_file(const std::string& name) {
 		out << buf[i];
 	}
 	
+	out.close();
+
+}
+
+void Sip_Parser::read_in_file(const std::string& name, long sec, long usec){
+	// READ
+	std::ofstream out;
+	out.open(name, std::ios::app);
+
+	char *buf = (char*)malloc(len);
+	pjsip_msg_print( msg, buf, len);
+
+	out << "Time: " << sec << "." << usec << "\r\n"; 
+	for (int i = 0; i < strlen(buf); ++i) {
+		out << buf[i];
+	}
 	
 	out.close();
 
