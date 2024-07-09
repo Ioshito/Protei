@@ -5,13 +5,7 @@ int main(int argc, char **argv) {
 
 	bool need_time = false;
 
-	if(argc < 3){ fprintf(stdout,"Usage: %s name_file filter [--flags]\n",argv[0]); return 0;}
-
-	if(argc == 4) {
-		std::string arg = argv[3];
-		if (arg == "--need_time") need_time = true;
-		else std::cout << "--flags is incorrect";
-	}
+	if(argc < 3){ fprintf(stdout,"Usage: %s name_file filter\n",argv[0]); return 0;}
 
 	packet_reader::Packet_Reader pr(argv[1]);
 	pr.set_filter(argv[2]);
@@ -19,13 +13,13 @@ int main(int argc, char **argv) {
 	//pr.read_in_file("packet_pcap.txt");
 	
 
-	Sip_Parser sp;
+	sip_parser::Sip_Parser sp;
 
     
 	for (std::unique_ptr<packet_reader::Time_and_Packet> testmsg = pr.get_packet_front(); testmsg != nullptr; testmsg = pr.get_packet_front()) {
 		//std::unique_ptr<packet_reader::Time_and_Packet> testmsg = pr.get_packet_front();
-		sp.parsing(testmsg->packet.data());
-		if (need_time) sp.read_in_file("packet_sip.txt", testmsg->sec, testmsg->usec);
+		sp.parsing(testmsg->packet.data(), testmsg->sec, testmsg->usec);
+		if (need_time) sp.read_in_file("packet_sip.txt");
 		else sp.read_in_file("packet_sip.txt");
 		testmsg.reset();
 	}
