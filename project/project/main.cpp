@@ -16,7 +16,7 @@ int main(int argc, char **argv) {
 	packet_reader::Packet_Reader pr(argv[1]);
 	pr.set_filter(argv[2]);
     	pr.processing(0);
-	//pr.read_in_file("file.txt");
+	//pr.read_in_file("packet_pcap.txt");
 	
 
 	Sip_Parser sp;

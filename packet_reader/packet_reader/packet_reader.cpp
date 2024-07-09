@@ -192,8 +192,8 @@ size_t Packet_Reader::get_size_deque() const{
 void Packet_Reader::read_in_file(const std::string& name) const {
 	std::ofstream out;
 	out.open(name);
-	for (int i = 0; i != get_size_deque(); ++i) {
-		out << get_packet_front()->packet;
+	for (std::unique_ptr<packet_reader::Time_and_Packet> testmsg = get_packet_front(); testmsg != nullptr; testmsg = get_packet_front()) {
+		out << testmsg->packet;
 	}
 	out.close();
 }
