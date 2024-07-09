@@ -18,19 +18,27 @@ typedef std::string Call_ID;
 struct Info_and_Sip_Packet {
 	long sec;
 	long usec;
-	int flag; // side: 1 - server, 0 - client
-	pjsip_msg *msg;
+	std::string ip;
+	int port;
+	pjsip_msg msg;
+};
+
+struct Key_and_Sides {
+	std::string ip;
+	int port;
+	std::vector<Info_and_Sip_Packet> a;
+	std::vector<Info_and_Sip_Packet> b;
 };
 
 class Sip_Parser {
 	public:
 		Sip_Parser();
-		void parsing(char *, long, long);
+		void parsing(char *, long, long, std::string&, int);
 		void read_in_file(const std::string&);
+		void read_in_files(const std::string&);
 		char *packet_msg;
 
 	private:
-
 		int len;
 		pjsip_msg *msg;
 	    pj_size_t msgsize;
@@ -39,7 +47,7 @@ class Sip_Parser {
 		static pjsip_endpoint *sip_endpt;
 		pj_pool_t *pool;
 		pjsip_parser_err_report err;
-		static std::map<Call_ID, std::pair<std::vector<Info_and_Sip_Packet>, std::vector<Info_and_Sip_Packet>>> sip_packets;
+		static std::map<Call_ID, Key_and_Sides> sip_packets;
 };
 
 }

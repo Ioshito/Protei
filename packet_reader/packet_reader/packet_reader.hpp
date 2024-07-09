@@ -17,9 +17,11 @@
 
 namespace packet_reader {
 
-struct Time_and_Packet {
+struct Info_and_Packet {
 	long sec;
 	long usec;
+	std::string ip;
+	int port;
 	std::string packet;
 };
 
@@ -31,7 +33,7 @@ class Packet_Reader {
 		void get_link_header_len(pcap_t*);
 		void processing (int) const;
 		static void packet_handler(u_char *, const struct pcap_pkthdr *, const u_char *);
-		std::unique_ptr<Time_and_Packet> get_packet_front() const;
+		std::unique_ptr<Info_and_Packet> get_packet_front() const;
 		size_t get_size_deque() const;
 		void read_in_file(const std::string&) const;
 	private:
@@ -41,6 +43,6 @@ class Packet_Reader {
 	    struct pcap_pkthdr header;
 	    const uint8_t *packet;
 	    struct bpf_program fp;      /* hold compiled program     */
-		static std::queue<std::unique_ptr<Time_and_Packet>> packets;
+		static std::queue<std::unique_ptr<Info_and_Packet>> packets;
 };
 }
