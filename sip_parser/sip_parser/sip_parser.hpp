@@ -7,7 +7,7 @@
 #include <queue>
 #include <memory>
 #include <map>
-
+#include <queue>
 #define SIZE_BUF 1000
 
 // namespace
@@ -15,24 +15,42 @@ namespace sip_parser {
 
 typedef std::string Call_ID;
 
-struct Info_and_Sip_Packet {
-	long sec;
-	long usec;
-	std::string ip;
-	int port;
-	pjsip_msg *msg;
+class Info_and_Sip_Packet {
+	public:
+		//Info_and_Sip_Packet(long, long, std::string, int, pjsip_msg *, std::string, pj_caching_pool &);
+		Info_and_Sip_Packet(pjsip_msg *);
+		Info_and_Sip_Packet();
+		//~Info_and_Sip_Packet();
+		pjsip_msg* get_msg();
+		std::string get_packet();
+	private:
+		pj_pool_t *msg_pool_;
+		pj_pool_t *msg_pool_2;
+		long sec_;
+		long usec_;
+		std::string ip_;
+		int port_;
+		pjsip_msg *copy;
+		std::string packet_;
+		static int flag;
 };
 
 struct Key_and_Sides {
-	std::string ip;
-	int port;
-	std::vector<Info_and_Sip_Packet> a;
-	std::vector<Info_and_Sip_Packet> b;
+	//public:
+	//	Key_and_Sides(std::string, int);
+	//	void push_back_a(Info_and_Sip_Packet);
+	//	void push_back_b(Info_and_Sip_Packet);
+	//private:
+		std::string ip_;
+		int port_;
+		std::vector<Info_and_Sip_Packet> a;
+		std::vector<Info_and_Sip_Packet> b;
 };
 
 class Sip_Parser {
 	public:
 		Sip_Parser();
+		//~Sip_Parser();
 		void parsing(char *, long, long, std::string&, int);
 		void read_in_file(const std::string&);
 		void read_in_files(const std::string&);
