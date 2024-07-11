@@ -33,19 +33,17 @@ class Packet_Reader {
 		void get_link_header_len(pcap_t*);
 		void processing (int) const;
 		static void packet_handler(u_char *, const struct pcap_pkthdr *, const u_char *);
-		Info_and_Packet* get_packet_front() const;
-		size_t get_size_deque() const;
+		Info_and_Packet* get_packet(int) const;
+		size_t get_size() const;
 		void read_in_file(const std::string&) const;
-		bool the_end() const;
 
 	private:
 		static int linkhdrlen;
-		static int it;
 		pcap_t* handle;
 		char errbuf[PCAP_ERRBUF_SIZE];
 	    struct pcap_pkthdr header;
 	    const uint8_t *packet;
 	    struct bpf_program fp;      /* hold compiled program     */
-		static std::vector<Info_and_Packet> packets;
+		static std::vector<std::unique_ptr<Info_and_Packet>> packets;
 };
 }
