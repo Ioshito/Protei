@@ -50,7 +50,7 @@ struct Key_and_Sides {
 class Sip_Parser {
 	public:
 		Sip_Parser();
-		//~Sip_Parser();
+		~Sip_Parser();
 		void parsing(char *, long, long, std::string&, int);
 		void read_in_file(const std::string&);
 		void read_in_files(const std::string&);

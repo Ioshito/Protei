@@ -7,9 +7,10 @@ long buf_usec = 0;
 int flag = 1;
 
 int Packet_Reader::linkhdrlen = 0;
+int Packet_Reader::it = 0;
 
 //std::deque<std::unique_ptr<std::string>> Packet_Reader::packets;
-std::queue<std::unique_ptr<Info_and_Packet>> Packet_Reader::packets;
+std::vector<Info_and_Packet> Packet_Reader::packets;
 
 Packet_Reader::Packet_Reader(const std::string& name) {
 	handle = pcap_open_offline(name.c_str(), errbuf);
@@ -171,28 +172,28 @@ void Packet_Reader::packet_handler(u_char *user, const struct pcap_pkthdr *packe
 	std::cout << "-------------------\n";
 	// std::unique_ptr<std::string> pStr = std::make_unique<std::string>(buffer.str());
 	//std::unique_ptr<std::string> pStr(new std::string(buffer.str()));
-	std::unique_ptr<Info_and_Packet> pStr(new Info_and_Packet{result/1000000, result%1000000, srcip, ntohs(udphdr->uh_sport), buffer.str()});
+	Info_and_Packet pStr{result/1000000, result%1000000, srcip, ntohs(udphdr->uh_sport), buffer.str()};
 	
 	// packets.push(std::move(pStr));
-	packets.push(std::move(pStr));
+	packets.push_back(std::move(pStr));
 	buffer.str("");
 }
-std::unique_ptr<Info_and_Packet> Packet_Reader::get_packet_front() const{
-	std::unique_ptr<Info_and_Packet> value;    
-	if (get_size_deque() == 0)  value = nullptr;
-	else {
-		value = std::move(packets.front());
-		packets.pop();
-	} 
+Info_and_Packet* Packet_Reader::get_packet_front() const{
+	Info_and_Packet* value;
+	value = &packets[it];
+	++it;
 	return value;
 }
 size_t Packet_Reader::get_size_deque() const{
 	return packets.size();
 }
+bool Packet_Reader::the_end() const{
+	return it == packets.size();
+}
 void Packet_Reader::read_in_file(const std::string& name) const {
 	std::ofstream out;
 	out.open(name);
-	for (std::unique_ptr<packet_reader::Info_and_Packet> testmsg = get_packet_front(); testmsg != nullptr; testmsg = get_packet_front()) {
+	for (packet_reader::Info_and_Packet* testmsg = get_packet_front(); the_end(); testmsg = get_packet_front()) {
 		out << testmsg->packet;
 	}
 	out.close();

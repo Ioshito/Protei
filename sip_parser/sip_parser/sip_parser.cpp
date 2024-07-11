@@ -69,11 +69,11 @@ Sip_Parser::Sip_Parser() {
 
 	pj_list_init(&err);
 }
-/*Sip_Parser::~Sip_Parser() {
+Sip_Parser::~Sip_Parser() {
 	pj_pool_release(pool);
 	pjsip_endpt_destroy(sip_endpt);
 	pj_shutdown();
-}*/
+}
 
 void Sip_Parser::parsing(char *packet_msg, long sec, long usec, std::string& ip, int port) {
 	// PARSING
@@ -88,6 +88,7 @@ void Sip_Parser::parsing(char *packet_msg, long sec, long usec, std::string& ip,
 		std::cout << buf[i];
 	}
 	std::cout << "END_TEST______________________________________________________________\n";
+	free(buf);
 
 	// Найти заголовок Call-ID
     pjsip_hdr *call_id_hdr = (pjsip_hdr *)pjsip_msg_find_hdr(msg, PJSIP_H_CALL_ID, NULL);
@@ -108,6 +109,7 @@ void Sip_Parser::parsing(char *packet_msg, long sec, long usec, std::string& ip,
 		pjsip_msg_print( buf_info.get_msg(), buf2, SIZE_BUF);
 		std::string buf_str = buf2;
 		std::cout << "TWO TEST-----------------------------------\n" << buf << "END_TWO_TEST___________________________________\n";
+		free(buf2);
 
 		if (auto search = sip_packets.find(call_id); search == sip_packets.end()) {
 			std::vector<Info_and_Sip_Packet> a, b;
@@ -135,10 +137,11 @@ void Sip_Parser::parsing(char *packet_msg, long sec, long usec, std::string& ip,
 		}
 		for (const auto& [call_id, key_and_sides] : sip_packets) {
 			for (auto elem : key_and_sides.a) {
-				char *buf = (char*)malloc(SIZE_BUF);
-				pjsip_msg_print(elem.get_msg(), buf, SIZE_BUF);                                                                 
-				std::string buf_str = buf;
+				char *buf3 = (char*)malloc(SIZE_BUF);
+				pjsip_msg_print(elem.get_msg(), buf3, SIZE_BUF);                                                                 
+				std::string buf_str = buf3;
 				std::cout << "THREE TEST-----------------------------------\n" << buf_str << "END_THREE_TEST___________________________________\n";
+				free(buf3);
 			}
       
     	}
@@ -159,7 +162,7 @@ void Sip_Parser::read_in_file(const std::string& name) {
 	for (int i = 0; i < strlen(buf); ++i) {
 		out << buf[i];
 	}
-
+	free(buf);
 	out.close();
 
 }
@@ -177,6 +180,7 @@ void Sip_Parser::read_in_files(const std::string& name) {
 			std::string buf_str = buf;
 			out_a << buf_str; 
 			std::cout << "Copy_pool: " << buf_str;
+			free(buf);
 		}
 		for (auto elem : key_and_sides.b) {
 			out_b << elem.get_packet();                                                                                     
