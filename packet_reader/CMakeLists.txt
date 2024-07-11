@@ -1,5 +1,5 @@
 set(target_name_lib packet_reader)
-
+set(target_name_test googletest_packet_reader)
 
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lpcap")
 
@@ -12,3 +12,16 @@ target_include_directories(
 	PUBLIC 
 	"${CMAKE_CURRENT_SOURCE_DIR}"
 )
+
+add_executable(
+	${target_name_test}
+	packet_reader/test.cpp
+)
+target_link_libraries(
+	${target_name_test}
+	packet_reader
+	gtest
+)
+
+include(GoogleTest)
+gtest_discover_tests(${target_name_test})

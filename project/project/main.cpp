@@ -9,10 +9,9 @@ int main(int argc, char **argv) {
 
 	packet_reader::Packet_Reader pr(argv[1]);
 	pr.set_filter(argv[2]);
-    	pr.processing(0);
-	//pr.read_in_file("packet_pcap.txt");
+    pr.processing(0);
+	pr.read_in_file("packet_pcap.txt");
 	
-
 	sip_parser::Sip_Parser sp;
 
 	for (int it = 0; it != pr.get_size(); ++it) {
@@ -21,6 +20,7 @@ int main(int argc, char **argv) {
 		//sp.read_in_file("packet_sip");
 		//testmsg.reset();
 	}
+
 
 	if (need_time) sp.read_in_files("packet_sip");
 	else sp.read_in_files("packet_sip");

@@ -10,6 +10,8 @@
 #include <queue>
 #define SIZE_BUF 1000
 
+PJ_DEF(pj_ssize_t) pjsip_msg_print_user( const pjsip_msg *msg, char *buf, pj_size_t size);
+
 // namespace
 namespace sip_parser {
 
@@ -55,6 +57,8 @@ class Sip_Parser {
 		void read_in_file(const std::string&);
 		void read_in_files(const std::string&);
 		char *packet_msg;
+		std::map<Call_ID, Key_and_Sides>* get_sip_packets();
+		void clear_sip_packets();
 
 	private:
 		int len;
