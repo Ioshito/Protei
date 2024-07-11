@@ -160,22 +160,12 @@ void Packet_Reader::packet_handler(u_char *user, const struct pcap_pkthdr *packe
 		packetptr_len -= sizeof(icmphdr);
 		break;
 	}
-	//std::cout << "Recieved Packet Size: " << packethdr->len << "\nPacket Size SIP: " << packetptr_len << "\n";
-	/*for (int i = 0; i < packetptr_len; ++i) {
-		std::cout << packetptr[i];
-		//if ( ((i+1)%16 == 0 && i != 0) || i == packethdr->len-1) std::cout << "\n";
-	}
-	*/
+	
 	for (int i = 0; i < packetptr_len; ++i) {
-		//std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(packetptr[i]) << " ";
 		buffer << packetptr[i];
 	}
-	//std::cout << "-------------------\n";
-	// std::unique_ptr<std::string> pStr = std::make_unique<std::string>(buffer.str());
-	//std::unique_ptr<std::string> pStr(new std::string(buffer.str()));
 	std::unique_ptr<Info_and_Packet> pStr(new Info_and_Packet({result/1000000, result%1000000, srcip, ntohs(udphdr->uh_sport), buffer.str()}));
 	
-	// packets.push(std::move(pStr));
 	packets.push_back(std::move(pStr));
 	buffer.str("");
 }
