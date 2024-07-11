@@ -36,7 +36,7 @@ class Packet_Reader {
 		Info_and_Packet* get_packet_front() const;
 		size_t get_size_deque() const;
 		void read_in_file(const std::string&) const;
-		bool Packet_Reader::the_end() const;
+		bool the_end() const;
 
 	private:
 		static int linkhdrlen;

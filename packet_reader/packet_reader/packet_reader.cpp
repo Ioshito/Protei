@@ -85,10 +85,12 @@ void Packet_Reader::packet_handler(u_char *user, const struct pcap_pkthdr *packe
 
 
 	/* Выводим время прибытия пакета */
-	printf("Время прибытия пакета: %s.%06ld\n", timestr, packethdr->ts.tv_usec);
-	printf("A: %07ld; B: %07ld\n", packethdr->ts.tv_sec, packethdr->ts.tv_usec);
+	
+	//printf("Время прибытия пакета: %s.%06ld\n", timestr, packethdr->ts.tv_usec);
+	//printf("A: %07ld; B: %07ld\n", packethdr->ts.tv_sec, packethdr->ts.tv_usec);
 	long result = packethdr->ts.tv_sec*1000000 - buf_sec*1000000 + packethdr->ts.tv_usec - buf_usec;
-	printf("Разница: %d.%06ld\n", result/1000000, result%1000000);
+	//printf("Разница: %d.%06ld\n", result/1000000, result%1000000);
+	
 
 	std::stringstream buffer;
 	struct ip* iphdr;
@@ -138,10 +140,10 @@ void Packet_Reader::packet_handler(u_char *user, const struct pcap_pkthdr *packe
 	 
 	case IPPROTO_UDP:
 		udphdr = (struct udphdr*)packetptr;
-		printf("UDP  %s:%d -> %s:%d\n", srcip, ntohs(udphdr->uh_sport),
-		       dstip, ntohs(udphdr->uh_dport));
-		printf("%s\n", iphdrInfo);
-		    printf("+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+\n\n");
+		//printf("UDP  %s:%d -> %s:%d\n", srcip, ntohs(udphdr->uh_sport),
+		       //dstip, ntohs(udphdr->uh_dport));
+		//printf("%s\n", iphdrInfo);
+		    //printf("+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+\n\n");
 		
 		packetptr += sizeof(udphdr);
 		packetptr_len -= sizeof(udphdr);
@@ -159,7 +161,7 @@ void Packet_Reader::packet_handler(u_char *user, const struct pcap_pkthdr *packe
 		packetptr_len -= sizeof(icmphdr);
 		break;
 	}
-	std::cout << "Recieved Packet Size: " << packethdr->len << "\nPacket Size SIP: " << packetptr_len << "\n";
+	//std::cout << "Recieved Packet Size: " << packethdr->len << "\nPacket Size SIP: " << packetptr_len << "\n";
 	/*for (int i = 0; i < packetptr_len; ++i) {
 		std::cout << packetptr[i];
 		//if ( ((i+1)%16 == 0 && i != 0) || i == packethdr->len-1) std::cout << "\n";
@@ -169,7 +171,7 @@ void Packet_Reader::packet_handler(u_char *user, const struct pcap_pkthdr *packe
 		//std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(packetptr[i]) << " ";
 		buffer << packetptr[i];
 	}
-	std::cout << "-------------------\n";
+	//std::cout << "-------------------\n";
 	// std::unique_ptr<std::string> pStr = std::make_unique<std::string>(buffer.str());
 	//std::unique_ptr<std::string> pStr(new std::string(buffer.str()));
 	Info_and_Packet pStr{result/1000000, result%1000000, srcip, ntohs(udphdr->uh_sport), buffer.str()};
@@ -188,7 +190,7 @@ size_t Packet_Reader::get_size_deque() const{
 	return packets.size();
 }
 bool Packet_Reader::the_end() const{
-	return it == packets.size();
+	return it != packets.size();
 }
 void Packet_Reader::read_in_file(const std::string& name) const {
 	std::ofstream out;

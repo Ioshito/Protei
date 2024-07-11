@@ -79,7 +79,7 @@ void Sip_Parser::parsing(char *packet_msg, long sec, long usec, std::string& ip,
 	// PARSING
 	len = strlen(packet_msg);
 	msg = pjsip_parse_msg(pool, packet_msg, len, &err);
-
+/*
 	std::cout << "TEEEEEEEST-----------------------------------------------------------\n";
 	char *buf = (char*)malloc(len);
 	pjsip_msg_print( msg, buf, len);
@@ -89,7 +89,7 @@ void Sip_Parser::parsing(char *packet_msg, long sec, long usec, std::string& ip,
 	}
 	std::cout << "END_TEST______________________________________________________________\n";
 	free(buf);
-
+*/
 	// Найти заголовок Call-ID
     pjsip_hdr *call_id_hdr = (pjsip_hdr *)pjsip_msg_find_hdr(msg, PJSIP_H_CALL_ID, NULL);
   
@@ -104,29 +104,30 @@ void Sip_Parser::parsing(char *packet_msg, long sec, long usec, std::string& ip,
 
 		try {
 		//Info_and_Sip_Packet buf_info (sec, usec, std::move(ip), port, msg, buf, cp);       
-		Info_and_Sip_Packet buf_info(msg);                    
+		Info_and_Sip_Packet buf_info(msg);               
+/*     
 		char *buf2 = (char*)malloc(SIZE_BUF);
 		pjsip_msg_print( buf_info.get_msg(), buf2, SIZE_BUF);
 		std::string buf_str = buf2;
 		std::cout << "TWO TEST-----------------------------------\n" << buf << "END_TWO_TEST___________________________________\n";
 		free(buf2);
-
+*/
 		if (auto search = sip_packets.find(call_id); search == sip_packets.end()) {
 			std::vector<Info_and_Sip_Packet> a, b;
 			//a.push_back(std::move(buf_info));
 			Key_and_Sides k_a_s {ip, port, std::move(a), std::move(b)};
 			const auto [it, success] = sip_packets.insert(std::pair{call_id, std::move(k_a_s)});
-			std::cout << "\n\n\n" << success << "\n\n\n";
+			//std::cout << "\n\n\n" << success << "\n\n\n";
 		}
 
 		if (auto search = sip_packets.find(call_id); search != sip_packets.end()) {
 			//добавить условие по флагу стороны
 			if (search->second.ip_ == ip && search->second.port_ == port) {
 				search->second.a.push_back(std::move(buf_info));
-				std::cout << "\n\n\nWrite a\n\n\n";
+				//std::cout << "\n\n\nWrite a\n\n\n";
 			}
 			else {
-				std::cout << "\n\n\nWrite b\n\n\n";
+				//std::cout << "\n\n\nWrite b\n\n\n";
 				search->second.b.push_back(std::move(buf_info));
 			}
 		}
@@ -137,11 +138,13 @@ void Sip_Parser::parsing(char *packet_msg, long sec, long usec, std::string& ip,
 		}
 		for (const auto& [call_id, key_and_sides] : sip_packets) {
 			for (auto elem : key_and_sides.a) {
+				/*
 				char *buf3 = (char*)malloc(SIZE_BUF);
 				pjsip_msg_print(elem.get_msg(), buf3, SIZE_BUF);                                                                 
 				std::string buf_str = buf3;
 				std::cout << "THREE TEST-----------------------------------\n" << buf_str << "END_THREE_TEST___________________________________\n";
 				free(buf3);
+				*/
 			}
       
     	}
@@ -179,7 +182,7 @@ void Sip_Parser::read_in_files(const std::string& name) {
 			pjsip_msg_print(elem.get_msg(), buf, SIZE_BUF);                                                                 
 			std::string buf_str = buf;
 			out_a << buf_str; 
-			std::cout << "Copy_pool: " << buf_str;
+			//std::cout << "Copy_pool: " << buf_str;
 			free(buf);
 		}
 		for (auto elem : key_and_sides.b) {
