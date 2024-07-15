@@ -25,17 +25,27 @@ struct Info_and_Packet {
 	std::string packet;
 };
 
-class Packet_Reader {
+class Packet_Reader_Interface {
 	public:
-		Packet_Reader(const std::string&);
-		~Packet_Reader();
-		void set_filter(const std::string&);
+		virtual ~Packet_Reader_Interface() = default; 
+		virtual void set_filter(const std::string&) = 0;
+		virtual void processing (int) = 0;
+		virtual void read_in_file(const std::string&) = 0;
+		virtual Info_and_Packet* get_packet(size_t) = 0;
+		virtual size_t get_size() = 0;																// Вернуть const
+};
+
+class Packet_Reader_Offline : public Packet_Reader_Interface{
+	public:
+		Packet_Reader_Offline(const std::string&);
+		~Packet_Reader_Offline();
+		void set_filter(const std::string&) override;
 		void get_link_header_len(pcap_t*);
-		void processing (int) const;
+		void processing (int) override;
 		static void packet_handler(u_char *, const struct pcap_pkthdr *, const u_char *);
-		Info_and_Packet* get_packet(int) const;
-		size_t get_size() const;
-		void read_in_file(const std::string&) const;
+		Info_and_Packet* get_packet(size_t) override;
+		size_t get_size() override;
+		void read_in_file(const std::string&) override;
 
 	private:
 		static int linkhdrlen;

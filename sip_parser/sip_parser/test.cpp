@@ -1,11 +1,25 @@
 #include <gtest/gtest.h>
+#include <gmock/gmock.h>
 #include <iostream>
 #include <sip_parser/sip_parser.hpp>
+#include <packet_reader/packet_reader.hpp>
+
+using ::testing::Return;
+
+class Packet_Reader_Mock : public packet_reader::Packet_Reader_Interface {
+public:
+  ~Packet_Reader_Mock() override = default;
+  MOCK_METHOD(void, set_filter, (const std::string&));
+  MOCK_METHOD(void, processing, (int));
+  MOCK_METHOD(void, read_in_file, (const std::string&));
+
+  MOCK_METHOD(size_t, get_size, ());
+  MOCK_METHOD(packet_reader::Info_and_Packet*, get_packet, (size_t));
+};
 
 namespace {
 TEST(sip_parser, sip_parser) {
-  sip_parser::Sip_Parser sp;
-
+  // Arrange
   char msg0[] = {
     "INVITE tel:+79217654321 SIP/2.0\r\n"
     "Via: SIP/2.0/UDP 127.0.0.103:1899;branch=z9hG4bK-73277-1-0\r\n"
@@ -29,10 +43,19 @@ TEST(sip_parser, sip_parser) {
     "a=ptime:20\r\n"
     "a=sendrecv\r\n"
   };
-
   std::string buffer = msg0;
   std::string ip = "127.0.0.103";
-  sp.parsing(buffer.data(), 0, 0, ip, 1899);
+  packet_reader::Info_and_Packet buf{0, 0, ip, 1899, buffer};
+  
+  Packet_Reader_Mock prM;
+  EXPECT_CALL(prM, get_size()).Times(1).WillOnce(Return(1));
+  EXPECT_CALL(prM, get_packet(0)).Times(1).WillOnce(Return(&buf));
+
+  // Act
+  sip_parser::Sip_Parser sp(&prM);
+
+
+  // Assert
   std::map<sip_parser::Call_ID, sip_parser::Key_and_Sides>* sip_packets = sp.get_sip_packets();
 
   std::string buf_str;
@@ -44,13 +67,14 @@ TEST(sip_parser, sip_parser) {
   	free(buf);
   }                                                             
   }
+  
   EXPECT_EQ(buf_str, buffer);
   sp.clear_sip_packets();
 }
 
-TEST(sip_parser, sip_parser_2) {
-  sip_parser::Sip_Parser sp2;
 
+TEST(sip_parser, sip_parser_2) {
+  // Arrange
   char msg1[] = {
     "ACK sip:127.0.1.1:5060;transport=UDP SIP/2.0\r\n"
     "Via: SIP/2.0/UDP 127.0.0.101:3902;branch=z9hG4bK-68185-1-5\r\n"
@@ -61,11 +85,18 @@ TEST(sip_parser, sip_parser_2) {
     "Max-Forwards: 70\r\n"
     "Content-Length: 0\r\n"
   };
-
   std::string buffer2 = msg1;
-
   std::string ip2 = "127.0.0.103";
-  sp2.parsing(buffer2.data(), 0, 0, ip2, 1899);
+  packet_reader::Info_and_Packet buf{0, 0, ip2, 1899, buffer2};
+
+  Packet_Reader_Mock prM;
+  EXPECT_CALL(prM, get_size()).Times(1).WillOnce(Return(1));
+  EXPECT_CALL(prM, get_packet(0)).Times(1).WillOnce(Return(&buf));
+  
+  // Act
+  sip_parser::Sip_Parser sp2(&prM);
+
+  // Assert
   std::map<sip_parser::Call_ID, sip_parser::Key_and_Sides>* sip_packets2 = sp2.get_sip_packets();
 
   std::string buf_packets;
@@ -81,6 +112,7 @@ TEST(sip_parser, sip_parser_2) {
   }
   EXPECT_EQ(buf_packets, buffer2);
 }
+
 
 }  // namespace
 

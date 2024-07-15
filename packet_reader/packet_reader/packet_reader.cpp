@@ -6,27 +6,27 @@ long buf_sec = 0;
 long buf_usec = 0;
 int flag = 1;
 
-int Packet_Reader::linkhdrlen = 0;
+int Packet_Reader_Offline::linkhdrlen = 0;
 
-//std::deque<std::unique_ptr<std::string>> Packet_Reader::packets;
-std::vector<std::unique_ptr<Info_and_Packet>> Packet_Reader::packets;
+//std::deque<std::unique_ptr<std::string>> Packet_Reader_Offline::packets;
+std::vector<std::unique_ptr<Info_and_Packet>> Packet_Reader_Offline::packets;
 
-Packet_Reader::Packet_Reader(const std::string& name) {
+Packet_Reader_Offline::Packet_Reader_Offline(const std::string& name) {
 	handle = pcap_open_offline(name.c_str(), errbuf);
 	if (handle == NULL) std::cout << "Could not open file " << name << ": " << errbuf << "\n";
 	get_link_header_len(handle);
 }
-Packet_Reader::~Packet_Reader(){
+Packet_Reader_Offline::~Packet_Reader_Offline(){
 	pcap_close(handle);
 }
-void Packet_Reader::set_filter(const std::string& filter) {
+void Packet_Reader_Offline::set_filter(const std::string& filter) {
 	/* Lets try and compile the program.. non-optimized */
 	if(pcap_compile(handle, &fp, filter.c_str(), 0, PCAP_NETMASK_UNKNOWN) == -1) std::cout << "Error calling pcap_compile\n";
 
 	/* set the compiled program as the filter */
 	if(pcap_setfilter(handle,&fp) == -1) std::cout << "Error setting filter\n";
 }
-void Packet_Reader::get_link_header_len(pcap_t* handle)
+void Packet_Reader_Offline::get_link_header_len(pcap_t* handle)
 {
     	int linktype;
  
@@ -61,11 +61,11 @@ void Packet_Reader::get_link_header_len(pcap_t* handle)
 		linkhdrlen = 0;
     	}
 }
-void Packet_Reader::processing (int count) const {
+void Packet_Reader_Offline::processing (int count) {
 	if (pcap_loop(handle, count, packet_handler, (u_char*)NULL) == PCAP_ERROR)
 		std::cout << "pcap_loop failed: " << pcap_geterr(handle) << "\n";
 }
-void Packet_Reader::packet_handler(u_char *user, const struct pcap_pkthdr *packethdr, const u_char *packetptr) {
+void Packet_Reader_Offline::packet_handler(u_char *user, const struct pcap_pkthdr *packethdr, const u_char *packetptr) {
 	if (flag) {
 		buf_sec = packethdr->ts.tv_sec;
 		buf_usec = packethdr->ts.tv_usec;
@@ -169,15 +169,15 @@ void Packet_Reader::packet_handler(u_char *user, const struct pcap_pkthdr *packe
 	packets.push_back(std::move(pStr));
 	buffer.str("");
 }
-Info_and_Packet* Packet_Reader::get_packet(int it) const{
+Info_and_Packet* Packet_Reader_Offline::get_packet(size_t it){
 	Info_and_Packet* value;
 	value = packets[it].get();
 	return value;
 }
-size_t Packet_Reader::get_size() const{
+size_t Packet_Reader_Offline::get_size(){
 	return packets.size();
 }
-void Packet_Reader::read_in_file(const std::string& name) const {
+void Packet_Reader_Offline::read_in_file(const std::string& name) {
 	std::ofstream out;
 	out.open(name);
 	for (int it = 0; it != get_size(); ++it) {

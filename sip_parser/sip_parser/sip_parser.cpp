@@ -167,7 +167,7 @@ std::string Info_and_Sip_Packet::get_packet() {
 }
 
 
-Sip_Parser::Sip_Parser() {
+Sip_Parser::Sip_Parser(packet_reader::Packet_Reader_Interface *pr): pr_(pr) {
 	// INIT
 	status = pj_init();
 	
@@ -178,6 +178,14 @@ Sip_Parser::Sip_Parser() {
 	pool = pj_pool_create(&cp.factory, "parser_pool", 4000, 4000, NULL);
 
 	pj_list_init(&err);
+
+    size_t size = pr->get_size();
+
+    for (size_t it = 0; it != size; ++it) {
+		packet_reader::Info_and_Packet* testmsg = pr_->get_packet(it);
+		parsing(testmsg->packet.data(), testmsg->sec, testmsg->usec, testmsg->ip, testmsg->port);
+	}
+
 }
 Sip_Parser::~Sip_Parser() {
 	pj_pool_release(pool);

@@ -8,6 +8,7 @@
 #include <memory>
 #include <map>
 #include <queue>
+#include <packet_reader/packet_reader.hpp>
 #define SIZE_BUF 1000
 
 PJ_DEF(pj_ssize_t) pjsip_msg_print_user( const pjsip_msg *msg, char *buf, pj_size_t size);
@@ -51,16 +52,17 @@ struct Key_and_Sides {
 
 class Sip_Parser {
 	public:
-		Sip_Parser();
+		Sip_Parser(packet_reader::Packet_Reader_Interface *);
 		~Sip_Parser();
-		void parsing(char *, long, long, std::string&, int);
 		void read_in_file(const std::string&);
 		void read_in_files(const std::string&);
-		char *packet_msg;
 		std::map<Call_ID, Key_and_Sides>* get_sip_packets();
 		void clear_sip_packets();
 
 	private:
+		void parsing(char *, long, long, std::string&, int);
+		
+		packet_reader::Packet_Reader_Interface *pr_;
 		int len;
 		pjsip_msg *msg;
 	    pj_size_t msgsize;

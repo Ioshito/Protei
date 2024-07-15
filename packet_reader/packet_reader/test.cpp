@@ -31,7 +31,7 @@ TEST(packet_reader, packet_reader_two_dialog_INVITE_one) {
   std::string buf = msg0;
   
   
-  packet_reader::Packet_Reader pr("../../packets_pcap_test/call_flow_04.pcap");
+  packet_reader::Packet_Reader_Offline pr("../../packets_pcap_test/call_flow_04.pcap");
   pr.set_filter("");
   pr.processing(0);
 
@@ -56,7 +56,7 @@ TEST(packet_reader, packet_reader_two_dialog_100) {
   std::string buf = msg0;
   
   
-  packet_reader::Packet_Reader pr("../../packets_pcap_test/call_flow_04.pcap");
+  packet_reader::Packet_Reader_Offline pr("../../packets_pcap_test/call_flow_04.pcap");
   pr.set_filter("");
   pr.processing(0);
 
@@ -94,7 +94,7 @@ TEST(packet_reader, packet_reader_two_dialog_INVITE_two) {
   std::string buf = msg0;
   
   
-  packet_reader::Packet_Reader pr("../../packets_pcap_test/call_flow_04.pcap");
+  packet_reader::Packet_Reader_Offline pr("../../packets_pcap_test/call_flow_04.pcap");
   pr.set_filter("");
   pr.processing(0);
 

@@ -1,6 +1,8 @@
 set(target_name_lib sip_parser)
 set(target_name_test googletest_sip_parser)
 
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lpcap")
+
 find_package(PkgConfig REQUIRED)
 
 set(ENV{PKG_CONFIG_PATH} "/home/ioshito/Protei/pjsip/test/lib/pkgconfig")
@@ -16,6 +18,10 @@ target_include_directories(
 	PUBLIC 
 	"${CMAKE_CURRENT_SOURCE_DIR}"
 )
+target_link_libraries(
+	${target_name_lib}
+	packet_reader
+)
 
 add_executable(
 	${target_name_test}
@@ -26,6 +32,7 @@ target_link_libraries(
 	sip_parser
 	PkgConfig::pjproject
 	gtest
+	gmock
 )
 
 include(GoogleTest)
