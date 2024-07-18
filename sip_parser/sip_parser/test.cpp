@@ -13,7 +13,7 @@ public:
   MOCK_METHOD(void, processing, (int));
   MOCK_METHOD(void, read_in_file, (const std::string&));
 
-  MOCK_METHOD(size_t, get_size, ());
+  MOCK_METHOD(size_t, get_size, (), (const));
   MOCK_METHOD(packet_reader::Info_and_Packet*, get_packet, (size_t));
 };
 

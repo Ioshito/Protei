@@ -1,5 +1,4 @@
 set(target_name_lib sip_parser)
-set(target_name_test googletest_sip_parser)
 
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lpcap")
 
@@ -23,17 +22,23 @@ target_link_libraries(
 	packet_reader
 )
 
-add_executable(
-	${target_name_test}
-	sip_parser/test.cpp
-)
-target_link_libraries(
-	${target_name_test}
-	sip_parser
-	PkgConfig::pjproject
-	gtest
-	gmock
-)
+option(TEST "Add a test_sip_parser" ON)
 
-include(GoogleTest)
-gtest_discover_tests(${target_name_test})
+if (TEST) 
+	set(target_name_test googletest_sip_parser)
+
+	add_executable(
+		${target_name_test}
+		sip_parser/test.cpp
+	)
+	target_link_libraries(
+		${target_name_test}
+		sip_parser
+		PkgConfig::pjproject
+		gtest
+		gmock
+	)
+
+	include(GoogleTest)
+	gtest_discover_tests(${target_name_test})
+endif()

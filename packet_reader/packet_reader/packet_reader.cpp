@@ -174,7 +174,7 @@ Info_and_Packet* Packet_Reader_Offline::get_packet(size_t it){
 	value = packets[it].get();
 	return value;
 }
-size_t Packet_Reader_Offline::get_size(){
+size_t Packet_Reader_Offline::get_size() const{
 	return packets.size();
 }
 void Packet_Reader_Offline::read_in_file(const std::string& name) {

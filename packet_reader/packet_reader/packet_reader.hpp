@@ -32,7 +32,7 @@ class Packet_Reader_Interface {
 		virtual void processing (int) = 0;
 		virtual void read_in_file(const std::string&) = 0;
 		virtual Info_and_Packet* get_packet(size_t) = 0;
-		virtual size_t get_size() = 0;																// Вернуть const
+		virtual size_t get_size() const = 0;																// Вернуть const
 };
 
 class Packet_Reader_Offline : public Packet_Reader_Interface{
@@ -44,7 +44,7 @@ class Packet_Reader_Offline : public Packet_Reader_Interface{
 		void processing (int) override;
 		static void packet_handler(u_char *, const struct pcap_pkthdr *, const u_char *);
 		Info_and_Packet* get_packet(size_t) override;
-		size_t get_size() override;
+		size_t get_size() const override;
 		void read_in_file(const std::string&) override;
 
 	private:
