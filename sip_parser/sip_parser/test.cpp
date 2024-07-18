@@ -61,9 +61,23 @@ TEST(sip_parser, sip_parser) {
   std::string buf_str;
   for (const auto& [call_id, key_and_sides] : *sip_packets) {
   for (auto elem : key_and_sides.a) {
-  	char *buf = (char*)malloc(SIZE_BUF);
-  	pjsip_msg_print_user(elem.get_msg(), buf, SIZE_BUF);                                                                 
-  	buf_str = buf;
+    char *buf = (char*)malloc(SIZE_BUF);
+    if(elem.index() == 0) {
+        sip_parser::Info_and_Sip_Packet iasp = std::get<0>(elem);
+        pjsip_msg_print_user(iasp.get_msg(), buf, SIZE_BUF);                                                                 
+    }
+    else {
+        sip_parser::receive r = std::get<1>(elem);
+        switch (r) {
+            case sip_parser::INVITE:
+                buf_str = "receive INVITE";
+            case sip_parser::ACK:
+                buf_str = "receive ACK";
+            case sip_parser::BYE:
+                buf_str = "receive BYE";
+        }
+    }
+		if (buf_str.empty()) buf_str = buf;                                                              
   	free(buf);
   }                                                             
   }
@@ -94,23 +108,36 @@ TEST(sip_parser, sip_parser_2) {
   EXPECT_CALL(prM, get_packet(0)).Times(1).WillOnce(Return(&buf));
   
   // Act
-  sip_parser::Sip_Parser sp2(&prM);
+  sip_parser::Sip_Parser sp(&prM);
 
   // Assert
-  std::map<sip_parser::Call_ID, sip_parser::Key_and_Sides>* sip_packets2 = sp2.get_sip_packets();
+  std::map<sip_parser::Call_ID, sip_parser::Key_and_Sides>* sip_packets = sp.get_sip_packets();
 
-  std::string buf_packets;
+  std::string buf_str;
 
-  for (const auto& [call_id2, key_and_sides2] : *sip_packets2) {
-  for (auto elem2 : key_and_sides2.a) {
-  	char *buf2 = (char*)malloc(SIZE_BUF);
-  	pjsip_msg_print_user(elem2.get_msg(), buf2, SIZE_BUF);                                                                 
-  	std::string buf_str = buf2;
-    buf_packets = std::move(buf_str);
-  	free(buf2);
+  for (const auto& [call_id, key_and_sides] : *sip_packets) {
+  for (auto elem : key_and_sides.a) {
+    char *buf = (char*)malloc(SIZE_BUF);
+    if(elem.index() == 0) {
+        sip_parser::Info_and_Sip_Packet iasp = std::get<0>(elem);
+        pjsip_msg_print_user(iasp.get_msg(), buf, SIZE_BUF);                                                                 
+    }
+    else {
+        sip_parser::receive r = std::get<1>(elem);
+        switch (r) {
+            case sip_parser::INVITE:
+                buf_str = "receive INVITE";
+            case sip_parser::ACK:
+                buf_str = "receive ACK";
+            case sip_parser::BYE:
+                buf_str = "receive BYE";
+        }
+    }
+		if (buf_str.empty()) buf_str = buf;                                                              
+  	free(buf);
   }                                                             
   }
-  EXPECT_EQ(buf_packets, buffer2);
+  EXPECT_EQ(buf_str, buffer2);
 }
 
 

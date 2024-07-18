@@ -7,8 +7,10 @@
 #include <queue>
 #include <memory>
 #include <map>
+#include <unordered_map>
 #include <queue>
 #include <packet_reader/packet_reader.hpp>
+#include <variant>
 #define SIZE_BUF 1000
 
 PJ_DEF(pj_ssize_t) pjsip_msg_print_user( const pjsip_msg *msg, char *buf, pj_size_t size);
@@ -38,6 +40,17 @@ class Info_and_Sip_Packet {
 		static int flag;
 };
 
+enum receive {
+	ERROR,
+	INVITE,
+	ACK,
+	BYE,
+	TRYING,
+	RINGING,
+	OK	
+};
+
+
 struct Key_and_Sides {
 	//public:
 	//	Key_and_Sides(std::string, int);
@@ -46,8 +59,8 @@ struct Key_and_Sides {
 	//private:
 		std::string ip_;
 		int port_;
-		std::vector<Info_and_Sip_Packet> a;
-		std::vector<Info_and_Sip_Packet> b;
+		std::vector<std::variant<Info_and_Sip_Packet, receive>> a;
+		std::vector<std::variant<Info_and_Sip_Packet, receive>> b;
 };
 
 class Sip_Parser {

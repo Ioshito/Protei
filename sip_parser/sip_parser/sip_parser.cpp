@@ -2,6 +2,7 @@
 #include <iostream>
 #include <malloc.h>
 
+
 int print_media_type_user(char *buf, unsigned len,
                             const pjsip_media_type *media)
 {
@@ -151,6 +152,8 @@ int Info_and_Sip_Packet::flag = 1;
 
 std::map<Call_ID, Key_and_Sides> Sip_Parser::sip_packets;
 
+std::unordered_map<std::string, receive> string_in_receive {{"INVITE", INVITE}, {"ACK", ACK}, {"BYE", BYE}, {"Trying", TRYING}, {"Ringing", RINGING}, {"OK", OK}};
+
 pjsip_endpoint * Sip_Parser::sip_endpt;
 
 Info_and_Sip_Packet::Info_and_Sip_Packet(){}
@@ -165,6 +168,7 @@ pjsip_msg* Info_and_Sip_Packet::get_msg() {
 std::string Info_and_Sip_Packet::get_packet() {
 	return packet_;
 }
+
 
 
 Sip_Parser::Sip_Parser(packet_reader::Packet_Reader_Interface *pr): pr_(pr) {
@@ -211,21 +215,44 @@ void Sip_Parser::parsing(char *packet_msg, long sec, long usec, std::string& ip,
 
 		try {
 		//Info_and_Sip_Packet buf_info (sec, usec, std::move(ip), port, msg, buf, cp);       
-		Info_and_Sip_Packet buf_info(msg);               
-
+		Info_and_Sip_Packet buf_info(msg);
+        //= std::move(buf_info);
 		if (auto search = sip_packets.find(call_id); search == sip_packets.end()) {
-			std::vector<Info_and_Sip_Packet> a, b;
+			std::vector<std::variant<Info_and_Sip_Packet, receive>> a, b;
 			Key_and_Sides k_a_s {ip, port, std::move(a), std::move(b)};
 			const auto [it, success] = sip_packets.insert(std::pair{call_id, std::move(k_a_s)});
 		}
 
 		if (auto search = sip_packets.find(call_id); search != sip_packets.end()) {
 			//добавить условие по флагу стороны
+            char* p = (char*)malloc(20);
+            pj_ssize_t len;
+            if (msg->type == PJSIP_REQUEST_MSG) {
+                len = msg->line.req.method.name.slen;
+                pj_memcpy(p, msg->line.req.method.name.ptr, len);
+            }
+            else {
+                len = msg->line.status.reason.slen;
+                pj_memcpy(p, msg->line.status.reason.ptr, len );
+            }
+            std::string str_msg_type = p;
+            std::cout << str_msg_type.erase(len, str_msg_type.size()-len) << "\n";
+            free(p);
+            
 			if (search->second.ip_ == ip && search->second.port_ == port) {
 				search->second.a.push_back(std::move(buf_info));
-			}
+                if (auto search2 = string_in_receive.find(str_msg_type); search2 != string_in_receive.end())
+                    search->second.b.push_back(search2->second);
+                else
+                    search->second.b.push_back(ERROR);
+            }
 			else {
 				search->second.b.push_back(std::move(buf_info));
+                auto msg = buf_info.get_msg();
+                if (auto search2 = string_in_receive.find(str_msg_type); search2 != string_in_receive.end())
+                    search->second.a.push_back(search2->second);
+                else
+                    search->second.a.push_back(ERROR);
 			}
 		}
 		
@@ -264,17 +291,75 @@ void Sip_Parser::read_in_files(const std::string& name) {
 	for (const auto& [call_id, key_and_sides] : sip_packets) {
 		for (auto elem : key_and_sides.a) {
 			char *buf = (char*)malloc(SIZE_BUF);
-			pjsip_msg_print_user(elem.get_msg(), buf, SIZE_BUF);                                                                 
-			std::string buf_str = buf;
-			out_a << buf_str; 
+            std::string buf_str;
+            if(elem.index() == 0) {
+                sip_parser::Info_and_Sip_Packet iasp = std::get<0>(elem);
+                pjsip_msg_print_user(iasp.get_msg(), buf, SIZE_BUF);                                                                 
+            }
+            else {
+                switch (std::get<1>(elem)) {
+                    case INVITE:
+                        buf_str = "receive INVITE\r\n";
+                        break;
+                    case ACK:
+                        buf_str = "receive ACK\r\n";
+                        break;
+                    case BYE:
+                        buf_str = "receive BYE\r\n";
+                        break;
+                    case TRYING:
+                        buf_str = "receive TRYING\r\n";
+                        break;
+                    case RINGING:
+                        buf_str = "receive RINGING\r\n";
+                        break;
+                    case OK:
+                        buf_str = "receive OK\r\n";
+                        break;
+                    default:
+                        buf_str = "ERROR\r\n";
+                        break;
+                }
+            }
+			if (buf_str.empty()) buf_str = buf;
+            out_a << buf_str; 
 			free(buf);
 		}
 		for (auto elem : key_and_sides.b) {
 			char *buf = (char*)malloc(SIZE_BUF);
-			pjsip_msg_print_user(elem.get_msg(), buf, SIZE_BUF);                                                                 
-			std::string buf_str = buf;
-			out_b << buf_str; 
-			free(buf);                                                                                   
+            std::string buf_str;
+            if(elem.index() == 0) {
+                sip_parser::Info_and_Sip_Packet iasp = std::get<0>(elem);
+                pjsip_msg_print_user(iasp.get_msg(), buf, SIZE_BUF);                                                                 
+            }
+            else {
+                switch (std::get<1>(elem)) {
+                    case INVITE:
+                        buf_str = "receive INVITE\r\n";
+                        break;
+                    case ACK:
+                        buf_str = "receive ACK\r\n";
+                        break;
+                    case BYE:
+                        buf_str = "receive BYE\r\n";
+                        break;
+                    case TRYING:
+                        buf_str = "receive TRYING\r\n";
+                        break;
+                    case RINGING:
+                        buf_str = "receive RINGING\r\n";
+                        break;
+                    case OK:
+                        buf_str = "receive OK\r\n";
+                        break;
+                    default:
+                        buf_str = "ERROR\r\n"; 
+                        break;
+                }
+            }
+			if (buf_str.empty()) buf_str = buf;
+            out_b << buf_str; 
+			free(buf);                                                                                 
 		}
 	}
 	
