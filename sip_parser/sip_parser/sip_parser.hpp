@@ -20,27 +20,7 @@ namespace sip_parser {
 
 typedef std::string Call_ID;
 
-class Info_and_Sip_Packet {
-	public:
-		//Info_and_Sip_Packet(long, long, std::string, int, pjsip_msg *, std::string, pj_caching_pool &);
-		Info_and_Sip_Packet(pjsip_msg *);
-		Info_and_Sip_Packet();
-		//~Info_and_Sip_Packet();
-		pjsip_msg* get_msg();
-		std::string get_packet();
-	private:
-		pj_pool_t *msg_pool_;
-		pj_pool_t *msg_pool_2;
-		long sec_;
-		long usec_;
-		std::string ip_;
-		int port_;
-		pjsip_msg *copy;
-		std::string packet_;
-		static int flag;
-};
-
-enum receive {
+enum type_msg {
 	ERROR,
 	INVITE,
 	ACK,
@@ -48,6 +28,28 @@ enum receive {
 	TRYING,
 	RINGING,
 	OK	
+};
+
+struct receive_type_msg {
+	type_msg t_msg;
+};
+
+class Info_and_Sip_Packet {
+	public:
+		Info_and_Sip_Packet(long, long, std::string, int, pjsip_msg *, type_msg);
+		Info_and_Sip_Packet(pjsip_msg *);
+		Info_and_Sip_Packet();
+		//~Info_and_Sip_Packet();
+		pjsip_msg* get_msg();
+		type_msg get_type_msg();
+		long get_sec();
+	private:
+		long sec_;
+		long usec_;
+		std::string ip_;
+		int port_;
+		pjsip_msg *copy;
+		type_msg t_msg_;
 };
 
 
@@ -59,21 +61,21 @@ struct Key_and_Sides {
 	//private:
 		std::string ip_;
 		int port_;
-		std::vector<std::variant<Info_and_Sip_Packet, receive>> a;
-		std::vector<std::variant<Info_and_Sip_Packet, receive>> b;
+		std::vector<std::variant<Info_and_Sip_Packet, receive_type_msg>> a;
+		std::vector<std::variant<Info_and_Sip_Packet, receive_type_msg>> b;
 };
 
 class Sip_Parser {
 	public:
 		Sip_Parser(packet_reader::Packet_Reader_Interface *);
 		~Sip_Parser();
-		void read_in_file(const std::string&);
 		void read_in_files(const std::string&);
 		std::map<Call_ID, Key_and_Sides>* get_sip_packets();
 		void clear_sip_packets();
 
 	private:
 		void parsing(char *, long, long, std::string&, int);
+		void read_in_file(std::ofstream&, const std::vector<std::variant<Info_and_Sip_Packet, receive_type_msg>>&);
 		
 		packet_reader::Packet_Reader_Interface *pr_;
 		int len;

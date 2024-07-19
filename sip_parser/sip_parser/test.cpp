@@ -67,7 +67,7 @@ TEST(sip_parser, sip_parser) {
         pjsip_msg_print_user(iasp.get_msg(), buf, SIZE_BUF);                                                                 
     }
     else {
-        sip_parser::receive r = std::get<1>(elem);
+        sip_parser::type_msg r = std::get<1>(elem).t_msg;
         switch (r) {
             case sip_parser::INVITE:
                 buf_str = "receive INVITE";
@@ -123,7 +123,7 @@ TEST(sip_parser, sip_parser_2) {
         pjsip_msg_print_user(iasp.get_msg(), buf, SIZE_BUF);                                                                 
     }
     else {
-        sip_parser::receive r = std::get<1>(elem);
+        sip_parser::type_msg r = std::get<1>(elem).t_msg;
         switch (r) {
             case sip_parser::INVITE:
                 buf_str = "receive INVITE";

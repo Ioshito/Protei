@@ -14,8 +14,8 @@ int main(int argc, char **argv) {
 	
 	sip_parser::Sip_Parser sp(&pr);
 
-	if (need_time) sp.read_in_files("packet_sip");
-	else sp.read_in_files("packet_sip");
+	if (need_time) sp.read_in_files("scenario");
+	else sp.read_in_files("scenario");
 	
     return 0;
 }

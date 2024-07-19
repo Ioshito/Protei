@@ -2,6 +2,27 @@
 #include <iostream>
 #include <malloc.h>
 
+void read_space(std::string& p, int n_space) {
+    std::string space;
+    for (int i = 0; i < n_space; ++i) {
+        space += ' ';
+    }
+    p.insert(0, space);
+    for (int i = 0; i < p.size(); ++i) {
+        if (p[i] == '\n' && i+1 != p.size()) {
+            p.insert(++i, space);
+            i+=n_space;
+        }
+    }
+}
+
+template <typename T>
+std::string toString(T val)
+{
+    std::ostringstream oss;
+    oss<< val;
+    return oss.str();
+}
 
 int print_media_type_user(char *buf, unsigned len,
                             const pjsip_media_type *media)
@@ -108,6 +129,20 @@ PJ_DEF(pj_ssize_t) pjsip_msg_print_user( const pjsip_msg *msg,
             if (p+3 >= end)
                 return -1;
 
+            if (hdr->type == PJSIP_H_CALL_ID) {
+                *p++ = '/';
+                *p++ = '/';
+                *p++ = '/';
+                *p++ = '[';
+                *p++ = 'c';
+                *p++ = 'a';
+                *p++ = 'l';
+                *p++ = 'l';
+                *p++ = '_';
+                *p++ = 'i';
+                *p++ = 'd';
+                *p++ = ']';
+            }
             *p++ = '\r';
             *p++ = '\n';
         }
@@ -148,15 +183,21 @@ PJ_DEF(pj_ssize_t) pjsip_msg_print_user( const pjsip_msg *msg,
 // namespace
 namespace sip_parser {
 
-int Info_and_Sip_Packet::flag = 1;
+std::string begin_msg_sipp = "<?xml version=\"1.0\" encoding=\"us-ascii\"?>\r\n<scenario>\r\n\r\n";
+std::string end_msg_sipp = "<ResponseTimeRepartition value=\"10, 20, 30, 40, 50, 100, 150, 200\" />\r\n<CallLengthRepartition value=\"10, 50, 100, 500, 1000, 5000, 10000\" />\r\n</scenario>";
 
 std::map<Call_ID, Key_and_Sides> Sip_Parser::sip_packets;
 
-std::unordered_map<std::string, receive> string_in_receive {{"INVITE", INVITE}, {"ACK", ACK}, {"BYE", BYE}, {"Trying", TRYING}, {"Ringing", RINGING}, {"OK", OK}};
+std::unordered_map<std::string, type_msg> string_in_type_msg {{"INVITE", INVITE}, {"ACK", ACK}, {"BYE", BYE}, {"Trying", TRYING}, {"Ringing", RINGING}, {"OK", OK}};
 
 pjsip_endpoint * Sip_Parser::sip_endpt;
 
 Info_and_Sip_Packet::Info_and_Sip_Packet(){}
+
+Info_and_Sip_Packet::Info_and_Sip_Packet(long sec, long usec, std::string ip, int port, pjsip_msg *msg, type_msg t_msg)
+    : sec_(sec), usec_(usec), ip_(ip), port_(port), t_msg_(t_msg) {
+	copy = msg;
+}
 
 Info_and_Sip_Packet::Info_and_Sip_Packet(pjsip_msg *msg) {
 	copy = msg;
@@ -165,10 +206,14 @@ Info_and_Sip_Packet::Info_and_Sip_Packet(pjsip_msg *msg) {
 pjsip_msg* Info_and_Sip_Packet::get_msg() {
 	return copy;
 }
-std::string Info_and_Sip_Packet::get_packet() {
-	return packet_;
+
+type_msg Info_and_Sip_Packet::get_type_msg() {
+    return t_msg_;
 }
 
+long Info_and_Sip_Packet::get_sec() {
+    return sec_;
+}
 
 
 Sip_Parser::Sip_Parser(packet_reader::Packet_Reader_Interface *pr): pr_(pr) {
@@ -213,20 +258,18 @@ void Sip_Parser::parsing(char *packet_msg, long sec, long usec, std::string& ip,
 		len = pjsip_hdr_print_on(call_id_hdr, call_id_value, 50);
 		Call_ID call_id = call_id_value;
 
-		try {
-		//Info_and_Sip_Packet buf_info (sec, usec, std::move(ip), port, msg, buf, cp);       
-		Info_and_Sip_Packet buf_info(msg);
-        //= std::move(buf_info);
+        // Если не существует записи с таким call_id       
 		if (auto search = sip_packets.find(call_id); search == sip_packets.end()) {
-			std::vector<std::variant<Info_and_Sip_Packet, receive>> a, b;
+			std::vector<std::variant<Info_and_Sip_Packet, receive_type_msg>> a, b;
 			Key_and_Sides k_a_s {ip, port, std::move(a), std::move(b)};
 			const auto [it, success] = sip_packets.insert(std::pair{call_id, std::move(k_a_s)});
 		}
 
+        // Если существует запись с таким call_id
 		if (auto search = sip_packets.find(call_id); search != sip_packets.end()) {
-			//добавить условие по флагу стороны
             char* p = (char*)malloc(20);
             pj_ssize_t len;
+
             if (msg->type == PJSIP_REQUEST_MSG) {
                 len = msg->line.req.method.name.slen;
                 pj_memcpy(p, msg->line.req.method.name.ptr, len);
@@ -235,30 +278,47 @@ void Sip_Parser::parsing(char *packet_msg, long sec, long usec, std::string& ip,
                 len = msg->line.status.reason.slen;
                 pj_memcpy(p, msg->line.status.reason.ptr, len );
             }
+            
             std::string str_msg_type = p;
-            std::cout << str_msg_type.erase(len, str_msg_type.size()-len) << "\n";
+            str_msg_type.erase(len, str_msg_type.size()-len);
             free(p);
             
+
+            receive_type_msg rtm;
+            if (auto search2 = string_in_type_msg.find(str_msg_type); search2 != string_in_type_msg.end())
+                    rtm.t_msg = search2->second;
+                else
+                    rtm.t_msg = ERROR;
+
+            Info_and_Sip_Packet buf_info (sec, usec, ip, port, msg, rtm.t_msg);
+            if (search->second.ip_ == ip && search->second.port_ == port) {
+				search->second.a.push_back(std::move(buf_info));
+                search->second.b.push_back(std::move(rtm));
+            }
+            else {
+				search->second.b.push_back(std::move(buf_info));
+				search->second.a.push_back(std::move(rtm));
+            }
+
+
+
+
+            /*
 			if (search->second.ip_ == ip && search->second.port_ == port) {
 				search->second.a.push_back(std::move(buf_info));
-                if (auto search2 = string_in_receive.find(str_msg_type); search2 != string_in_receive.end())
-                    search->second.b.push_back(search2->second);
+                if (auto search2 = string_in_type_msg.find(str_msg_type); search2 != string_in_type_msg.end())
+                    search->second.b.push_back( std::move( receive_type_msg {search2->second} ) );
                 else
-                    search->second.b.push_back(ERROR);
+                    search->second.b.push_back( std::move( receive_type_msg { ERROR } ) );
             }
 			else {
 				search->second.b.push_back(std::move(buf_info));
-                auto msg = buf_info.get_msg();
-                if (auto search2 = string_in_receive.find(str_msg_type); search2 != string_in_receive.end())
-                    search->second.a.push_back(search2->second);
+                if (auto search2 = string_in_type_msg.find(str_msg_type); search2 != string_in_type_msg.end())
+                    search->second.a.push_back( std::move( receive_type_msg {search2->second} ) );
                 else
-                    search->second.a.push_back(ERROR);
+                    search->second.a.push_back( std::move( receive_type_msg { ERROR } ) );
 			}
-		}
-		
-		}
-		catch (...) {
-			std::cout << "ERROR";
+            */
 		}
 	}
 	else {
@@ -266,105 +326,97 @@ void Sip_Parser::parsing(char *packet_msg, long sec, long usec, std::string& ip,
 	}
 }
 
-void Sip_Parser::read_in_file(const std::string& name) {
+void Sip_Parser::read_in_file(std::ofstream& out, const std::vector<std::variant<Info_and_Sip_Packet, receive_type_msg>>& vec) {
 	// READ
-	std::ofstream out;
-	out.open(name+".txt", std::ios::app);
+    long buf_sec;
+    bool flag = 0;
+	for (auto elem : vec) {
+            std::string result;
+            std::string end_result = "        ]]>\r\n</send>\r\n";
+            if(elem.index() == 0) {
+                result = "<send retrans=\"500\">\r\n        <![CDATA[\r\n";
+                sip_parser::Info_and_Sip_Packet iasp = std::get<0>(elem);
 
-	char *buf = (char*)malloc(SIZE_BUF);
-	pjsip_msg_print_user( msg, buf, SIZE_BUF);
+                if (flag == 1) {
+                    out <<  "<pause milliseconds=\"" + toString((iasp.get_sec() - buf_sec) * 1000) + "\"/>\r\n";
+                }
 
-	for (int i = 0; i < strlen(buf); ++i) {
-		out << buf[i];
-	}
-	free(buf);
-	out.close();
+                if (iasp.get_type_msg() == ACK) {
+                    result = "<send crlf=\"true\">\r\n        <![CDATA[\r\n";
+                    flag = 1;
+                    buf_sec = iasp.get_sec();
+                }
+                if (iasp.get_type_msg() == TRYING) {
+                    result = "<send>\r\n        <![CDATA[\r\n";
+                    end_result = "        ]]>\r\n</send>\r\n<pause milliseconds=\"100\"/>\r\n";
+                }
+                if (iasp.get_type_msg() == RINGING) {
+                    result = "<send>\r\n        <![CDATA[\r\n";
+                    end_result = "        ]]>\r\n</send>\r\n<pause milliseconds=\"500\"/>\r\n";
+                }
+			    
+                char *buf = (char*)malloc(SIZE_BUF);
+                pjsip_msg_print_user(iasp.get_msg(), buf, SIZE_BUF);
+                std::string buf_str = buf;
+    			free(buf);
+                read_space(buf_str, 16);          
+                result += std::move(buf_str);
+                result += end_result;
+            }
+            else {
+                switch (std::get<1>(elem).t_msg) {
+                    case INVITE:
+                        result += "<recv request=\"INVITE\"";
+                        break;
+                    case ACK:
+                        result += "<recv request=\"ACK\"  crlf=\"true\"";
+                        break;
+                    case BYE:
+                        result += "<recv request=\"BYE\"";
+                        break;
+                    case TRYING:
+                        result += "<recv response=\"100\"";
+                        break;
+                    case RINGING:
+                        result += "<recv response=\"180\"";
+                        break;
+                    case OK:
+                        result += "<recv response=\"200\"";
+                        break;
+                    default:
+                        result += "\"ERROR\"";
+                        break;
+                }
+                result += " />\r\n";
+            }
+            out << result; 
+		}
 
 }
 
 void Sip_Parser::read_in_files(const std::string& name) {
 	// READ
-	std::ofstream out_a, out_b;
-	out_a.open(name+"_a.txt");
-	out_b.open(name+"_b.txt");
+	
 
 	for (const auto& [call_id, key_and_sides] : sip_packets) {
-		for (auto elem : key_and_sides.a) {
-			char *buf = (char*)malloc(SIZE_BUF);
-            std::string buf_str;
-            if(elem.index() == 0) {
-                sip_parser::Info_and_Sip_Packet iasp = std::get<0>(elem);
-                pjsip_msg_print_user(iasp.get_msg(), buf, SIZE_BUF);                                                                 
-            }
-            else {
-                switch (std::get<1>(elem)) {
-                    case INVITE:
-                        buf_str = "receive INVITE\r\n";
-                        break;
-                    case ACK:
-                        buf_str = "receive ACK\r\n";
-                        break;
-                    case BYE:
-                        buf_str = "receive BYE\r\n";
-                        break;
-                    case TRYING:
-                        buf_str = "receive TRYING\r\n";
-                        break;
-                    case RINGING:
-                        buf_str = "receive RINGING\r\n";
-                        break;
-                    case OK:
-                        buf_str = "receive OK\r\n";
-                        break;
-                    default:
-                        buf_str = "ERROR\r\n";
-                        break;
-                }
-            }
-			if (buf_str.empty()) buf_str = buf;
-            out_a << buf_str; 
-			free(buf);
-		}
-		for (auto elem : key_and_sides.b) {
-			char *buf = (char*)malloc(SIZE_BUF);
-            std::string buf_str;
-            if(elem.index() == 0) {
-                sip_parser::Info_and_Sip_Packet iasp = std::get<0>(elem);
-                pjsip_msg_print_user(iasp.get_msg(), buf, SIZE_BUF);                                                                 
-            }
-            else {
-                switch (std::get<1>(elem)) {
-                    case INVITE:
-                        buf_str = "receive INVITE\r\n";
-                        break;
-                    case ACK:
-                        buf_str = "receive ACK\r\n";
-                        break;
-                    case BYE:
-                        buf_str = "receive BYE\r\n";
-                        break;
-                    case TRYING:
-                        buf_str = "receive TRYING\r\n";
-                        break;
-                    case RINGING:
-                        buf_str = "receive RINGING\r\n";
-                        break;
-                    case OK:
-                        buf_str = "receive OK\r\n";
-                        break;
-                    default:
-                        buf_str = "ERROR\r\n"; 
-                        break;
-                }
-            }
-			if (buf_str.empty()) buf_str = buf;
-            out_b << buf_str; 
-			free(buf);                                                                                 
-		}
+        std::ofstream out_a, out_b;
+        out_a.open(toString(call_id.substr(9)) + "_A_side_" + name + ".xml");
+        out_a << begin_msg_sipp;
+    
+        out_b.open(toString(call_id.substr(9)) + "_B_side_" + name + ".xml");
+        out_b << begin_msg_sipp;
+        
+		read_in_file(out_a, key_and_sides.a);
+		read_in_file(out_b, key_and_sides.b);
+
+        out_a << end_msg_sipp;
+	    out_a.close();
+    
+        out_b << end_msg_sipp;
+	    out_b.close();
 	}
 	
-	out_a.close();
-	out_b.close();
+    
 
 }
 std::map<Call_ID, Key_and_Sides>* Sip_Parser::get_sip_packets() {
