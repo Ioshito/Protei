@@ -51,8 +51,10 @@ TEST(sip_parser, sip_parser) {
   EXPECT_CALL(prM, get_size()).Times(1).WillOnce(Return(1));
   EXPECT_CALL(prM, get_packet(0)).Times(1).WillOnce(Return(&buf));
 
+  std::string reg_exp = "[\\w[:punct:]]+";
+
   // Act
-  sip_parser::Sip_Parser sp(&prM);
+  sip_parser::Sip_Parser sp(&prM, reg_exp);
 
 
   // Assert
@@ -64,7 +66,7 @@ TEST(sip_parser, sip_parser) {
     char *buf = (char*)malloc(SIZE_BUF);
     if(elem.index() == 0) {
         sip_parser::Info_and_Sip_Packet iasp = std::get<0>(elem);
-        pjsip_msg_print_user(iasp.get_msg(), buf, SIZE_BUF);                                                                 
+        pjsip_msg_print_user(iasp.get_msg(), buf, SIZE_BUF, reg_exp);                                                                 
     }
     else {
         sip_parser::type_msg r = std::get<1>(elem).t_msg;
@@ -106,9 +108,11 @@ TEST(sip_parser, sip_parser_2) {
   Packet_Reader_Mock prM;
   EXPECT_CALL(prM, get_size()).Times(1).WillOnce(Return(1));
   EXPECT_CALL(prM, get_packet(0)).Times(1).WillOnce(Return(&buf));
+
+  std::string reg_exp = "[\\w[:punct:]]+";
   
   // Act
-  sip_parser::Sip_Parser sp(&prM);
+  sip_parser::Sip_Parser sp(&prM, reg_exp);
 
   // Assert
   std::map<sip_parser::Call_ID, sip_parser::Key_and_Sides>* sip_packets = sp.get_sip_packets();
@@ -120,7 +124,7 @@ TEST(sip_parser, sip_parser_2) {
     char *buf = (char*)malloc(SIZE_BUF);
     if(elem.index() == 0) {
         sip_parser::Info_and_Sip_Packet iasp = std::get<0>(elem);
-        pjsip_msg_print_user(iasp.get_msg(), buf, SIZE_BUF);                                                                 
+        pjsip_msg_print_user(iasp.get_msg(), buf, SIZE_BUF, reg_exp);                                                                 
     }
     else {
         sip_parser::type_msg r = std::get<1>(elem).t_msg;

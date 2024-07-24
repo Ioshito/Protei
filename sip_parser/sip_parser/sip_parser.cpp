@@ -1,6 +1,4 @@
 #include <sip_parser/sip_parser.hpp>
-#include <iostream>
-#include <malloc.h>
 
 void read_space(std::string& p, int n_space) {
     std::string space;
@@ -51,7 +49,7 @@ int print_media_type_user(char *buf, unsigned len,
 
 
 PJ_DEF(pj_ssize_t) pjsip_msg_print_user( const pjsip_msg *msg, 
-                                    char *buf, pj_size_t size)
+                                    char *buf, pj_size_t size, std::string& reg_exp)
 {
     char *p=buf, *end=buf+size;
     pj_ssize_t len;
@@ -146,6 +144,13 @@ PJ_DEF(pj_ssize_t) pjsip_msg_print_user( const pjsip_msg *msg,
             *p++ = '\r';
             *p++ = '\n';
         }
+        std::cmatch result;
+        std::regex regular(reg_exp);
+        if(std::regex_search(p, result, regular)) {
+            for (int i = 0; i < result.size(); ++i)
+                std::cout << result[i];
+            std::cout << "\n";
+        }
     }
 
     /* Process message body. */
@@ -216,7 +221,7 @@ long Info_and_Sip_Packet::get_sec() {
 }
 
 
-Sip_Parser::Sip_Parser(packet_reader::Packet_Reader_Interface *pr): pr_(pr) {
+Sip_Parser::Sip_Parser(packet_reader::Packet_Reader_Interface *pr, std::string& reg_exp): pr_(pr), reg_exp_(reg_exp) {
 	// INIT
 	status = pj_init();
 	
@@ -356,7 +361,7 @@ void Sip_Parser::read_in_file(std::ofstream& out, const std::vector<std::variant
                 }
 			    
                 char *buf = (char*)malloc(SIZE_BUF);
-                pjsip_msg_print_user(iasp.get_msg(), buf, SIZE_BUF);
+                pjsip_msg_print_user(iasp.get_msg(), buf, SIZE_BUF, reg_exp_);
                 std::string buf_str = buf;
     			free(buf);
                 read_space(buf_str, 16);          
@@ -411,7 +416,7 @@ void Sip_Parser::read_in_files(const std::string& name) {
 
         out_a << end_msg_sipp;
 	    out_a.close();
-    
+
         out_b << end_msg_sipp;
 	    out_b.close();
 	}

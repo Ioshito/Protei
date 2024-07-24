@@ -11,9 +11,13 @@
 #include <queue>
 #include <packet_reader/packet_reader.hpp>
 #include <variant>
+#include <iostream>
+#include <malloc.h>
+#include <regex>
+
 #define SIZE_BUF 1000
 
-PJ_DEF(pj_ssize_t) pjsip_msg_print_user( const pjsip_msg *msg, char *buf, pj_size_t size);
+PJ_DEF(pj_ssize_t) pjsip_msg_print_user( const pjsip_msg *msg, char *buf, pj_size_t size, std::string&);
 
 // namespace
 namespace sip_parser {
@@ -67,7 +71,7 @@ struct Key_and_Sides {
 
 class Sip_Parser {
 	public:
-		Sip_Parser(packet_reader::Packet_Reader_Interface *);
+		Sip_Parser(packet_reader::Packet_Reader_Interface *, std::string&);
 		~Sip_Parser();
 		void read_in_files(const std::string&);
 		std::map<Call_ID, Key_and_Sides>* get_sip_packets();
@@ -77,6 +81,7 @@ class Sip_Parser {
 		void parsing(char *, long, long, std::string&, int);
 		void read_in_file(std::ofstream&, const std::vector<std::variant<Info_and_Sip_Packet, receive_type_msg>>&);
 		
+		std::string& reg_exp_;
 		packet_reader::Packet_Reader_Interface *pr_;
 		int len;
 		pjsip_msg *msg;
