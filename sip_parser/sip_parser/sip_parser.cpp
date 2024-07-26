@@ -110,10 +110,13 @@ PJ_DEF(pj_ssize_t) pjsip_msg_print_user( const pjsip_msg *msg,
         *p++ = '\r';
         *p++ = '\n';
     }
-
+    int abc = 0;
     /* Print each of the headers. */
     for (hdr=msg->hdr.next; hdr!=&msg->hdr; hdr=hdr->next) {
-        len = pjsip_hdr_print_on(hdr, p, end-p);
+        len = pjsip_hdr_print_on(hdr, p, end-p);                
+        p += len;                                               
+        *p = '\0';
+        p -= len;
         if (len < 0) {
            if (len == -2) {
                PJ_LOG(5, ("sip_msg", "Header with no vptr encountered!! "\
@@ -121,35 +124,53 @@ PJ_DEF(pj_ssize_t) pjsip_msg_print_user( const pjsip_msg *msg,
            }
            return len;
         }
-
+//                        
+// [0][1][2][3][4][\0]
         if (len > 0) {
-            p += len;
-            if (p+3 >= end)
-                return -1;
-
-            if (hdr->type == PJSIP_H_CALL_ID) {
-                *p++ = '/';
-                *p++ = '/';
-                *p++ = '/';
-                *p++ = '[';
-                *p++ = 'c';
-                *p++ = 'a';
-                *p++ = 'l';
-                *p++ = 'l';
-                *p++ = '_';
-                *p++ = 'i';
-                *p++ = 'd';
-                *p++ = ']';
+            auto& obj = obj_config::Obj_Config::Instance();
+            nlohmann::json* json = obj.get_json();
+            bool flag = 0;
+            for (auto& it : json->items()) {
+                std::cmatch result;
+                std::regex regular(it.key());
+                if(std::regex_search(p, result, regular)) {
+                    flag = 1;
+                    p += it.key().size();
+                    memset(p, 0, len - it.key().size()+1);
+                    *p++ = ' ';
+                    if (it.value().is_null())
+                        std::cout << "EMPTY: " << it.key() << "\n";
+                    std::string cpp_string = it.value();
+                    strcpy(p, cpp_string.c_str());
+                    p += cpp_string.size();
+                    *p++ = '\r';
+                    *p++ = '\n';
+                    break;
+                }
             }
-            *p++ = '\r';
-            *p++ = '\n';
-        }
-        std::cmatch result;
-        std::regex regular(reg_exp);
-        if(std::regex_search(p, result, regular)) {
-            for (int i = 0; i < result.size(); ++i)
-                std::cout << result[i];
-            std::cout << "\n";
+            if (!flag) {
+                p += len;
+                if (p+3 >= end)
+                    return -1;
+
+                if (hdr->type == PJSIP_H_CALL_ID) {
+                    *p++ = '/';
+                    *p++ = '/';
+                    *p++ = '/';
+                    *p++ = '[';
+                    *p++ = 'c';
+                    *p++ = 'a';
+                    *p++ = 'l';
+                    *p++ = 'l';
+                    *p++ = '_';
+                    *p++ = 'i';
+                    *p++ = 'd';
+                    *p++ = ']';
+                }
+                *p++ = '\r';
+                *p++ = '\n';
+            }
+            
         }
     }
 
@@ -185,7 +206,6 @@ PJ_DEF(pj_ssize_t) pjsip_msg_print_user( const pjsip_msg *msg,
     return p-buf;
 }
 
-// namespace
 namespace sip_parser {
 
 std::string begin_msg_sipp = "<?xml version=\"1.0\" encoding=\"us-ascii\"?>\r\n<scenario>\r\n\r\n";
@@ -361,6 +381,7 @@ void Sip_Parser::read_in_file(std::ofstream& out, const std::vector<std::variant
                 }
 			    
                 char *buf = (char*)malloc(SIZE_BUF);
+                
                 pjsip_msg_print_user(iasp.get_msg(), buf, SIZE_BUF, reg_exp_);
                 std::string buf_str = buf;
     			free(buf);
@@ -431,4 +452,4 @@ std::map<Call_ID, Key_and_Sides>* Sip_Parser::get_sip_packets() {
 void Sip_Parser::clear_sip_packets(){
 	sip_packets.clear();
 }
-}
+} // namespace

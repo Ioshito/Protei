@@ -20,6 +20,7 @@ target_include_directories(
 target_link_libraries(
 	${target_name_lib}
 	packet_reader
+	obj_config
 )
 
 option(TEST "Add a test_sip_parser" ON)
@@ -35,6 +36,7 @@ if (TEST)
 		${target_name_test}
 		sip_parser
 		PkgConfig::pjproject
+		obj_config
 		gtest
 		gmock
 	)

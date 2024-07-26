@@ -43,6 +43,29 @@ TEST(sip_parser, sip_parser) {
     "a=ptime:20\r\n"
     "a=sendrecv\r\n"
   };
+  char msg1[] = {
+    "INVITE tel:+79217654321 SIP/2.0\r\n"
+    "Via: SIP/2.0/UDP 127.0.0.103:1899;branch=z9hG4bK-73277-1-0\r\n"
+    "To: <tel:+79217654321>\r\n"
+    "Call-ID: 1-73277@127.0.0.103///[call_id]\r\n"
+    "CSeq: 1 INVITE\r\n"
+    "Contact: <sip:127.0.0.103:1899>\r\n"
+    "Max-Forwards: 70\r\n"
+    "Content-Type: application/sdp\r\n"
+    "Content-Length: 221\r\n"
+    "\r\n"
+    "v=0\r\n"
+    "o=BasicCallUAC 1328079155 1 IN IP4 127.0.0.103\r\n"
+    "s=BasicCall\r\n"
+    "c=IN IP4 127.0.0.103\r\n"
+    "t=0 0\r\n"
+    "m=audio 4580 RTP/AVP 8 101\r\n"
+    "a=rtpmap:8 PCMA/8000\r\n"
+    "a=rtpmap:101 telephone-event/8000\r\n"
+    "a=fmtp:101 0-15\r\n"
+    "a=ptime:20\r\n"
+    "a=sendrecv\r\n"
+  };
   std::string buffer = msg0;
   std::string ip = "127.0.0.103";
   packet_reader::Info_and_Packet buf{0, 0, ip, 1899, buffer};
@@ -84,6 +107,7 @@ TEST(sip_parser, sip_parser) {
   }                                                             
   }
   
+  buffer = msg1;
   EXPECT_EQ(buf_str, buffer);
   sp.clear_sip_packets();
 }
@@ -96,6 +120,16 @@ TEST(sip_parser, sip_parser_2) {
     "Via: SIP/2.0/UDP 127.0.0.101:3902;branch=z9hG4bK-68185-1-5\r\n"
     "To: <tel:+79217654321>;tag=uas1\r\n"
     "Call-ID: 1-68185@127.0.0.101\r\n"
+    "CSeq: 1 ACK\r\n"
+    "Contact: <sip:127.0.0.101:3902>\r\n"
+    "Max-Forwards: 70\r\n"
+    "Content-Length: 0\r\n"
+  };
+  char msg0[] = {
+    "ACK sip:127.0.1.1:5060;transport=UDP SIP/2.0\r\n"
+    "Via: SIP/2.0/UDP 127.0.0.101:3902;branch=z9hG4bK-68185-1-5\r\n"
+    "To: <tel:+79217654321>;tag=uas1\r\n"
+    "Call-ID: 1-68185@127.0.0.101///[call_id]\r\n"
     "CSeq: 1 ACK\r\n"
     "Contact: <sip:127.0.0.101:3902>\r\n"
     "Max-Forwards: 70\r\n"
@@ -141,6 +175,7 @@ TEST(sip_parser, sip_parser_2) {
   	free(buf);
   }                                                             
   }
+  buffer2 = msg0;
   EXPECT_EQ(buf_str, buffer2);
 }
 

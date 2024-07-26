@@ -29,6 +29,7 @@ target_link_libraries(
 	sip_parser
 	-lpcap
 	argparse
+	obj_config
 )
 
 #target_include_directories(${target_name} PUBLIC ${pjproject_INCLUDE_DIRS})

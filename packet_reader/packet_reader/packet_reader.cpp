@@ -186,5 +186,5 @@ void Packet_Reader_Offline::read_in_file(const std::string& name) {
 	}
 	out.close();
 }
-}
+} // namespace
 
