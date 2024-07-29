@@ -22,6 +22,37 @@ std::string toString(T val)
     return oss.str();
 }
 
+std::string template_selection(std::string& header_name) {
+    std::string result, method = "INVITE";
+
+    if(header_name == "Via:") {
+        result = "SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]";
+    }
+    if(header_name == "From:") {
+        result = "<sip:[$cgpn]@[local_ip]:[local_port]>;tag=uac[call_number]";
+    }
+    if(header_name == "To:") {
+        result = "<sip:[service]@[remote_ip]:[remote_port]>";
+    }
+    if(header_name == "Call-ID:") {
+        result = "<sip:[service]@[remote_ip]:[remote_port]>";
+    }
+    if(header_name == "CSeq:") {
+        result = "[cseq] " + method;
+    }
+    if(header_name == "Contact:") {
+        result = "sip:[local_ip]:[local_port]";
+    }
+    if(header_name == "Content-Type:") {
+        result = "application/sdp";
+    }
+    if(header_name == "Content-Length:") {
+        result = "[len]";
+    }
+
+    return result;
+}
+
 int print_media_type_user(char *buf, unsigned len,
                             const pjsip_media_type *media)
 {
@@ -135,14 +166,21 @@ PJ_DEF(pj_ssize_t) pjsip_msg_print_user( const pjsip_msg *msg,
                 std::regex regular(elem.name);
                 if(std::regex_search(p, result, regular)) {
                     flag = 1;
-                    p += elem.name.size();
+                    std::string header_name = strtok(p, " ");
+
+                    p += header_name.size();
                     
-                    memset(p, 0, len - elem.name.size()+1);
+                    memset(p, 0, len - header_name.size()+1);
                     *p++ = ' ';
                     
-                    std::string cpp_string = elem.value.value_or("NOOOOOOOOOOOO");
-                    strcpy(p, cpp_string.c_str());
-                    p += cpp_string.size();
+                    std::string value_string;
+                    if (elem.value)
+                        value_string = *elem.value;
+                    else {
+                        value_string = template_selection(header_name);
+                    }
+                    strcpy(p, value_string.c_str());
+                    p += value_string.size();
                     *p++ = '\r';
                     *p++ = '\n';
                     break;

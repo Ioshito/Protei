@@ -3,15 +3,15 @@
 	{	
 		"headers": [
 			{
-				"namesss": "Call-ID:",
+				"name": "Call-ID:",
 				"value": "f81d4fae-7dec-11d0-a765-00a0c91e6bf6@foo.bar.com///[call-id]"
 			},
 			{
-				"namesss": "To:",
+				"name": "To:",
 				"value": "-----------"
 			},
 			{
-				"namesss": "Via:"	
+				"name": "Via:"	
 			}
 		],
 		"option_name": true

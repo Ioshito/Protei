@@ -16,7 +16,7 @@ Obj_Config::Obj_Config(std::string& path) {
         for (auto elem = (*obj).begin(); elem != (*obj).end(); ++elem) {
             std::string key, value;
             elem.value().get_to(value);
-            if (elem.key() == "namesss") p.name = value;
+            if (elem.key() == "name") p.name = value;
             if (elem.key() == "value") {
                 p.value.emplace(value);
             }
