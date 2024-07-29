@@ -124,23 +124,23 @@ PJ_DEF(pj_ssize_t) pjsip_msg_print_user( const pjsip_msg *msg,
            }
            return len;
         }
-//                        
-// [0][1][2][3][4][\0]
+
         if (len > 0) {
             auto& obj = obj_config::Obj_Config::Instance();
-            nlohmann::json* json = obj.get_json();
+            auto head_and_option = obj.get_headers_and_option();
             bool flag = 0;
-            for (auto& it : json->items()) {
+
+            for (auto& elem : head_and_option->headers) {
                 std::cmatch result;
-                std::regex regular(it.key());
+                std::regex regular(elem.name);
                 if(std::regex_search(p, result, regular)) {
                     flag = 1;
-                    p += it.key().size();
-                    memset(p, 0, len - it.key().size()+1);
+                    p += elem.name.size();
+                    
+                    memset(p, 0, len - elem.name.size()+1);
                     *p++ = ' ';
-                    if (it.value().is_null())
-                        std::cout << "EMPTY: " << it.key() << "\n";
-                    std::string cpp_string = it.value();
+                    
+                    std::string cpp_string = elem.value.value_or("NOOOOOOOOOOOO");
                     strcpy(p, cpp_string.c_str());
                     p += cpp_string.size();
                     *p++ = '\r';
@@ -148,6 +148,7 @@ PJ_DEF(pj_ssize_t) pjsip_msg_print_user( const pjsip_msg *msg,
                     break;
                 }
             }
+
             if (!flag) {
                 p += len;
                 if (p+3 >= end)

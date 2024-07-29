@@ -1,6 +1,6 @@
 set(target_name_lib sip_parser)
 
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lpcap")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lpcap -g")
 
 find_package(PkgConfig REQUIRED)
 
