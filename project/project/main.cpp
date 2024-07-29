@@ -1,7 +1,7 @@
 #include <packet_reader/packet_reader.hpp>
 #include <sip_parser/sip_parser.hpp>
 #include <argparse/argparse.hpp>
-#include <obj_config/obj_config.hpp>
+#include <config/config.hpp>
 
 int main(int argc, char **argv) {
 

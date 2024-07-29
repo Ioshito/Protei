@@ -10,7 +10,5 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 #set(CMAKE_VERBOSE_MAKEFILE true)
 
 add_subdirectory(external)
-add_subdirectory(packet_reader)
-add_subdirectory(sip_parser)
-add_subdirectory(obj_config)
+add_subdirectory(parser)
 add_subdirectory(project)

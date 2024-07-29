@@ -1,5 +1,4 @@
-#include <obj_config/obj_config.hpp>
-
+#include <config/config.hpp>
 
 namespace obj_config {
 

@@ -14,7 +14,7 @@
 #include <iostream>
 #include <malloc.h>
 #include <regex>
-#include <obj_config/obj_config.hpp>
+#include <config/config.hpp>
 
 #define SIZE_BUF 1000
 
