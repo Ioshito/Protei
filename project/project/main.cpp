@@ -8,7 +8,6 @@ int main(int argc, char **argv) {
 	argparse::ArgumentParser program("app");
 	program.add_argument("path_pcap").help("path_pcap to packets_pcap");
 	program.add_argument("filter").help("filter to packet_reader");
-	program.add_argument("reg_exp").help("regular_expression");
 	program.add_argument("path_json").help("path_json to config");
 
 	try {
@@ -22,7 +21,6 @@ int main(int argc, char **argv) {
 
 	std::string path_pcap = program.get<std::string>("path_pcap");
 	std::string filter = program.get<std::string>("filter");
-	std::string reg_exp = program.get<std::string>("reg_exp");
 	std::string path_json = program.get<std::string>("path_json");
 	
 	obj_config::Obj_Config& obj = obj_config::Obj_Config::Instance(path_json);
@@ -34,7 +32,7 @@ int main(int argc, char **argv) {
     pr.processing(0);
 	pr.read_in_file("packet_pcap.txt");
 	
-	sip_parser::Sip_Parser sp(&pr, reg_exp);
+	sip_parser::Sip_Parser sp(&pr);
 
 	sp.read_in_files("scenario");
 	

@@ -49,7 +49,7 @@ int print_media_type_user(char *buf, unsigned len,
 
 
 PJ_DEF(pj_ssize_t) pjsip_msg_print_user( const pjsip_msg *msg, 
-                                    char *buf, pj_size_t size, std::string& reg_exp)
+                                    char *buf, pj_size_t size)
 {
     char *p=buf, *end=buf+size;
     pj_ssize_t len;
@@ -242,7 +242,7 @@ long Info_and_Sip_Packet::get_sec() {
 }
 
 
-Sip_Parser::Sip_Parser(packet_reader::Packet_Reader_Interface *pr, std::string& reg_exp): pr_(pr), reg_exp_(reg_exp) {
+Sip_Parser::Sip_Parser(packet_reader::Packet_Reader_Interface *pr): pr_(pr) {
 	// INIT
 	status = pj_init();
 	
@@ -383,7 +383,7 @@ void Sip_Parser::read_in_file(std::ofstream& out, const std::vector<std::variant
 			    
                 char *buf = (char*)malloc(SIZE_BUF);
                 
-                pjsip_msg_print_user(iasp.get_msg(), buf, SIZE_BUF, reg_exp_);
+                pjsip_msg_print_user(iasp.get_msg(), buf, SIZE_BUF);
                 std::string buf_str = buf;
     			free(buf);
                 read_space(buf_str, 16);          
