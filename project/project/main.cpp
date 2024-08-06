@@ -4,12 +4,13 @@
 #include <config/config.hpp>
 
 int main(int argc, char **argv) {
+	std::string path_pcap, filter, path_json, path_schema;
 
 	argparse::ArgumentParser program("app");
-	program.add_argument("path_pcap").help("path_pcap to packets_pcap");
-	program.add_argument("filter").help("filter to packet_reader");
-	program.add_argument("path_json").help("path_json to config");
-	program.add_argument("path_schema").help("path_schema to config");
+	program.add_argument("--path_pcap").help("path_pcap to packets_pcap").required().store_into(path_pcap);
+	program.add_argument("--filter").help("filter to packet_reader").default_value(std::string("-")).store_into(filter);
+	program.add_argument("--path_json").help("path_json to config").required().store_into(path_json);
+	program.add_argument("--path_schema").help("path_schema to config").required().store_into(path_schema);
 
 	try {
   	  program.parse_args(argc, argv);
@@ -19,11 +20,6 @@ int main(int argc, char **argv) {
   	  std::cerr << program;
   	  return -1;
   	}
-
-	std::string path_pcap = program.get<std::string>("path_pcap");
-	std::string filter = program.get<std::string>("filter");
-	std::string path_json = program.get<std::string>("path_json");
-	std::string path_schema = program.get<std::string>("path_schema");
 	
 	try {
 		obj_config::Obj_Config& obj = obj_config::Obj_Config::Instance(path_json, path_schema);
@@ -33,7 +29,7 @@ int main(int argc, char **argv) {
     }
 
 	packet_reader::Packet_Reader_Offline pr(path_pcap);
-	pr.set_filter(filter);
+	if (filter != "-") pr.set_filter(filter);
     pr.processing(0);
 	pr.read_in_file("packet_pcap.txt");
 	
