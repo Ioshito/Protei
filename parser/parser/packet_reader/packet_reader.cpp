@@ -2,14 +2,13 @@
 
 namespace packet_reader{
 
-long buf_prev_sec = 0;
-long buf_prev_usec = 0;
-
 int Packet_Reader_Offline::linkhdrlen = 0;
 
 //std::deque<std::unique_ptr<std::string>> Packet_Reader_Offline::packets;
 std::vector<std::unique_ptr<Info_and_Packet>> Packet_Reader_Offline::packets;
 int Packet_Reader_Offline::flag_is_prev = 1;
+long Packet_Reader_Offline::buf_prev_sec = 0;
+long Packet_Reader_Offline::buf_prev_usec = 0;
 
 
 Packet_Reader_Offline::Packet_Reader_Offline(const std::string& name) {
@@ -21,7 +20,7 @@ Packet_Reader_Offline::Packet_Reader_Offline(const std::string& name, const std:
 	pcap = pcap_open_offline(name.c_str(), errbuf);
 	if (pcap == nullptr) throw "Could not open file " + name + ": " + errbuf;
 	get_link_header_len(pcap);
-	set_filter(filter);
+	if (filter != "-") set_filter(filter);
 }
 Packet_Reader_Offline::~Packet_Reader_Offline(){
 	pcap_close(pcap);
@@ -70,10 +69,13 @@ void Packet_Reader_Offline::get_link_header_len(pcap_t* pcap)
 }
 void Packet_Reader_Offline::processing (int count) {
 	flag_is_prev = 1;
-	if (pcap_loop(pcap, count, packet_handler, (u_char*)NULL) == PCAP_ERROR)
+	buf_prev_sec = 0;
+	buf_prev_usec = 0;
+	if (pcap_loop(pcap, count, packet_handler, (u_char*)this) == PCAP_ERROR)
 		std::cout << "pcap_loop failed: " << pcap_geterr(pcap) << "\n";
 }
 void Packet_Reader_Offline::packet_handler(u_char *user, const struct pcap_pkthdr *packethdr, const u_char *packetptr) {
+	Packet_Reader_Offline* p = (Packet_Reader_Offline*) user;
 	if (!flag_is_prev) {
 		buf_prev_sec = packethdr->ts.tv_sec;
 		buf_prev_usec = packethdr->ts.tv_usec;

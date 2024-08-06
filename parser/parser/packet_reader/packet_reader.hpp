@@ -39,6 +39,7 @@ class Packet_Reader_Interface {
 
 class Packet_Reader_Offline : public Packet_Reader_Interface {
 	public:
+		Packet_Reader_Offline();
 		Packet_Reader_Offline(const std::string&);
 		Packet_Reader_Offline(const std::string&, const std::string&);
 		~Packet_Reader_Offline();
@@ -60,6 +61,8 @@ class Packet_Reader_Offline : public Packet_Reader_Interface {
 	    struct bpf_program fp;      /* hold compiled program     */
 		static std::vector<std::unique_ptr<Info_and_Packet>> packets;
 		static int flag_is_prev;
+		static long buf_prev_sec;
+		static long buf_prev_usec;
 
 };
 }
