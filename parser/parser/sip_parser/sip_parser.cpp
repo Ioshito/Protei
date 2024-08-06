@@ -155,7 +155,7 @@ std::string Sip_Parser::template_selection(std::string& header_name, std::string
                     result = "<sip:[service]@[remote_ip]:[remote_port]>";
                     break;
                 case 3:
-                    result = "";
+                    result = "<tel:[???]>";
                     break;
                 default:
                     result = "ERROR";
