@@ -32,7 +32,6 @@ TEST(packet_reader, packet_reader_two_dialog_INVITE_one) {
   
   try {
     packet_reader::Packet_Reader_Offline pr("../../../packets_pcap_test/call_flow_04.pcap");
-    pr.set_filter("");
     pr.processing(0);
 
     packet_reader::Info_and_Packet* testmsg = pr.get_packet(0);
@@ -59,7 +58,6 @@ TEST(packet_reader, packet_reader_two_dialog_100) {
   
   
   packet_reader::Packet_Reader_Offline pr("../../../packets_pcap_test/call_flow_04.pcap");
-  pr.set_filter("");
   pr.processing(0);
 
   packet_reader::Info_and_Packet* testmsg = pr.get_packet(1);
@@ -97,7 +95,6 @@ TEST(packet_reader, packet_reader_two_dialog_INVITE_two) {
   
   
   packet_reader::Packet_Reader_Offline pr("../../../packets_pcap_test/call_flow_04.pcap");
-  pr.set_filter("");
   pr.processing(0);
 
   packet_reader::Info_and_Packet* testmsg = pr.get_packet(2);
