@@ -2,8 +2,8 @@
 
 namespace packet_reader{
 
-long buf_sec = 0;
-long buf_usec = 0;
+long buf_prev_sec = 0;
+long buf_prev_usec = 0;
 int flag = 1;
 
 int Packet_Reader_Offline::linkhdrlen = 0;
@@ -73,8 +73,8 @@ void Packet_Reader_Offline::processing (int count) {
 }
 void Packet_Reader_Offline::packet_handler(u_char *user, const struct pcap_pkthdr *packethdr, const u_char *packetptr) {
 	if (flag) {
-		buf_sec = packethdr->ts.tv_sec;
-		buf_usec = packethdr->ts.tv_usec;
+		buf_prev_sec = packethdr->ts.tv_sec;
+		buf_prev_usec = packethdr->ts.tv_usec;
 		flag = 0;
 	}
 
@@ -93,8 +93,8 @@ void Packet_Reader_Offline::packet_handler(u_char *user, const struct pcap_pkthd
 	
 	//printf("Время прибытия пакета: %s.%06ld\n", timestr, packethdr->ts.tv_usec);
 	//printf("A: %07ld; B: %07ld\n", packethdr->ts.tv_sec, packethdr->ts.tv_usec);
-	// 
-	long result = packethdr->ts.tv_sec*1000000 - buf_sec*1000000 + packethdr->ts.tv_usec - buf_usec;
+	// Нынешние секунды отнимаются от предыдущих, сдвигаются на 1'000'000 для записи микросекунд и записывается разница нынешних микросекунд и предыдущих
+	long result = (packethdr->ts.tv_sec - buf_prev_sec)*1'000'000 + packethdr->ts.tv_usec - buf_prev_usec;
 	//printf("Разница: %d.%06ld\n", result/1000000, result%1000000);
 	
 
