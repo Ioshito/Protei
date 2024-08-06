@@ -29,12 +29,11 @@ int main(int argc, char **argv) {
     }
 
 	try {
-		packet_reader::Packet_Reader_Offline pr(path_pcap);
-		if (filter != "-") pr.set_filter(filter);
-    	pr.processing(0);
-		pr.read_in_file("packet_pcap.txt");
+		packet_reader::Packet_Reader_Offline pro(path_pcap, filter);
+		pro.processing(0);
+		pro.read_in_file("packet_pcap.txt");
 		
-		sip_parser::Sip_Parser sp(&pr);
+		sip_parser::Sip_Parser sp(&pro);
 	
 		sp.read_in_files("scenario");
 	}
