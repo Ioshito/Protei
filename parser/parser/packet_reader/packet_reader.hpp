@@ -28,11 +28,13 @@ struct Info_and_Packet {
 class Packet_Reader_Interface {
 	public:
 		virtual ~Packet_Reader_Interface() = default; 
-		virtual void set_filter(const std::string&) = 0;
 		virtual void processing (int) = 0;
 		virtual void read_in_file(const std::string&) = 0;
 		virtual Info_and_Packet* get_packet(size_t) = 0;
 		virtual size_t get_size() const = 0;																// Вернуть const
+
+	private:
+		virtual void set_filter(const std::string&) = 0;
 };
 
 class Packet_Reader_Offline : public Packet_Reader_Interface {
@@ -40,15 +42,16 @@ class Packet_Reader_Offline : public Packet_Reader_Interface {
 		Packet_Reader_Offline(const std::string&);
 		Packet_Reader_Offline(const std::string&, const std::string&);
 		~Packet_Reader_Offline();
-		void set_filter(const std::string&) override;
-		void get_link_header_len(pcap_t*);
 		void processing (int) override;
-		static void packet_handler(u_char *, const struct pcap_pkthdr *, const u_char *);
 		Info_and_Packet* get_packet(size_t) override;
-		size_t get_size() const override;
 		void read_in_file(const std::string&) override;
+		size_t get_size() const override;
 
 	private:
+		void set_filter(const std::string&) override;
+		void get_link_header_len(pcap_t*);
+		static void packet_handler(u_char *, const struct pcap_pkthdr *, const u_char *);
+
 		static int linkhdrlen;
 		pcap_t* pcap;
 		char errbuf[PCAP_ERRBUF_SIZE];
