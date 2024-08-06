@@ -13,7 +13,7 @@ std::vector<std::unique_ptr<Info_and_Packet>> Packet_Reader_Offline::packets;
 
 Packet_Reader_Offline::Packet_Reader_Offline(const std::string& name) {
 	pcap = pcap_open_offline(name.c_str(), errbuf);
-	if (pcap == NULL) std::cout << "Could not open file " << name << ": " << errbuf << "\n";
+	if (pcap == nullptr) throw "Could not open file " + name + ": " + errbuf;
 	get_link_header_len(pcap);
 }
 Packet_Reader_Offline::~Packet_Reader_Offline(){

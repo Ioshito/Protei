@@ -30,15 +30,17 @@ TEST(packet_reader, packet_reader_two_dialog_INVITE_one) {
   };
   std::string buf = msg0;
   
-  
-  packet_reader::Packet_Reader_Offline pr("../../../packets_pcap_test/call_flow_04.pcap");
-  pr.set_filter("");
-  pr.processing(0);
+  try {
+    packet_reader::Packet_Reader_Offline pr("../../../packets_pcap_test/call_flow_04.pcap");
+    pr.set_filter("");
+    pr.processing(0);
 
-  packet_reader::Info_and_Packet* testmsg = pr.get_packet(0);
-
-  EXPECT_EQ(testmsg->packet, buf);
+    packet_reader::Info_and_Packet* testmsg = pr.get_packet(0);
   
+    EXPECT_EQ(testmsg->packet, buf);
+  } catch (const char* error_message) {
+    FAIL() << error_message << "\n";
+  }
 }
 
 TEST(packet_reader, packet_reader_two_dialog_100) {
