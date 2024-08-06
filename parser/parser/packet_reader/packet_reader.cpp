@@ -16,6 +16,12 @@ Packet_Reader_Offline::Packet_Reader_Offline(const std::string& name) {
 	if (pcap == nullptr) throw "Could not open file " + name + ": " + errbuf;
 	get_link_header_len(pcap);
 }
+Packet_Reader_Offline::Packet_Reader_Offline(const std::string& name, const std::string& filter) {
+	pcap = pcap_open_offline(name.c_str(), errbuf);
+	if (pcap == nullptr) throw "Could not open file " + name + ": " + errbuf;
+	get_link_header_len(pcap);
+	set_filter(filter);
+}
 Packet_Reader_Offline::~Packet_Reader_Offline(){
 	pcap_close(pcap);
 }
@@ -87,6 +93,7 @@ void Packet_Reader_Offline::packet_handler(u_char *user, const struct pcap_pkthd
 	
 	//printf("Время прибытия пакета: %s.%06ld\n", timestr, packethdr->ts.tv_usec);
 	//printf("A: %07ld; B: %07ld\n", packethdr->ts.tv_sec, packethdr->ts.tv_usec);
+	// 
 	long result = packethdr->ts.tv_sec*1000000 - buf_sec*1000000 + packethdr->ts.tv_usec - buf_usec;
 	//printf("Разница: %d.%06ld\n", result/1000000, result%1000000);
 	

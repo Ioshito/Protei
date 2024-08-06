@@ -38,6 +38,7 @@ class Packet_Reader_Interface {
 class Packet_Reader_Offline : public Packet_Reader_Interface {
 	public:
 		Packet_Reader_Offline(const std::string&);
+		Packet_Reader_Offline(const std::string&, const std::string&);
 		~Packet_Reader_Offline();
 		void set_filter(const std::string&) override;
 		void get_link_header_len(pcap_t*);
