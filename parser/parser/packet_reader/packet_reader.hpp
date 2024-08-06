@@ -49,7 +49,7 @@ class Packet_Reader_Offline : public Packet_Reader_Interface {
 
 	private:
 		static int linkhdrlen;
-		pcap_t* handle;
+		pcap_t* pcap;
 		char errbuf[PCAP_ERRBUF_SIZE];
 	    struct pcap_pkthdr header;
 	    const uint8_t *packet;

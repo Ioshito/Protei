@@ -12,27 +12,27 @@ int Packet_Reader_Offline::linkhdrlen = 0;
 std::vector<std::unique_ptr<Info_and_Packet>> Packet_Reader_Offline::packets;
 
 Packet_Reader_Offline::Packet_Reader_Offline(const std::string& name) {
-	handle = pcap_open_offline(name.c_str(), errbuf);
-	if (handle == NULL) std::cout << "Could not open file " << name << ": " << errbuf << "\n";
-	get_link_header_len(handle);
+	pcap = pcap_open_offline(name.c_str(), errbuf);
+	if (pcap == NULL) std::cout << "Could not open file " << name << ": " << errbuf << "\n";
+	get_link_header_len(pcap);
 }
 Packet_Reader_Offline::~Packet_Reader_Offline(){
-	pcap_close(handle);
+	pcap_close(pcap);
 }
 void Packet_Reader_Offline::set_filter(const std::string& filter) {
 	/* Lets try and compile the program.. non-optimized */
-	if(pcap_compile(handle, &fp, filter.c_str(), 0, PCAP_NETMASK_UNKNOWN) == -1) std::cout << "Error calling pcap_compile\n";
+	if(pcap_compile(pcap, &fp, filter.c_str(), 0, PCAP_NETMASK_UNKNOWN) == -1) std::cout << "Error calling pcap_compile\n";
 
 	/* set the compiled program as the filter */
-	if(pcap_setfilter(handle,&fp) == -1) std::cout << "Error setting filter\n";
+	if(pcap_setfilter(pcap,&fp) == -1) std::cout << "Error setting filter\n";
 }
-void Packet_Reader_Offline::get_link_header_len(pcap_t* handle)
+void Packet_Reader_Offline::get_link_header_len(pcap_t* pcap)
 {
     	int linktype;
  
     	// Determine the datalink layer type.
-    	if ((linktype = pcap_datalink(handle)) == PCAP_ERROR) {
-		printf("pcap_datalink(): %s\n", pcap_geterr(handle));
+    	if ((linktype = pcap_datalink(pcap)) == PCAP_ERROR) {
+		printf("pcap_datalink(): %s\n", pcap_geterr(pcap));
 		return;
    	}
  
@@ -62,8 +62,8 @@ void Packet_Reader_Offline::get_link_header_len(pcap_t* handle)
     	}
 }
 void Packet_Reader_Offline::processing (int count) {
-	if (pcap_loop(handle, count, packet_handler, (u_char*)NULL) == PCAP_ERROR)
-		std::cout << "pcap_loop failed: " << pcap_geterr(handle) << "\n";
+	if (pcap_loop(pcap, count, packet_handler, (u_char*)NULL) == PCAP_ERROR)
+		std::cout << "pcap_loop failed: " << pcap_geterr(pcap) << "\n";
 }
 void Packet_Reader_Offline::packet_handler(u_char *user, const struct pcap_pkthdr *packethdr, const u_char *packetptr) {
 	if (flag) {
