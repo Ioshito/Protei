@@ -96,6 +96,7 @@ target_include_directories(
 target_link_libraries(
 	${target_name_lib}
 	nlohmann_json::nlohmann_json
+	nlohmann_json_schema_validator
 )
 
 option(TEST "Add a test_config" ON)

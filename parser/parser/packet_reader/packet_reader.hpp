@@ -35,7 +35,7 @@ class Packet_Reader_Interface {
 		virtual size_t get_size() const = 0;																// Вернуть const
 };
 
-class Packet_Reader_Offline : public Packet_Reader_Interface{
+class Packet_Reader_Offline : public Packet_Reader_Interface {
 	public:
 		Packet_Reader_Offline(const std::string&);
 		~Packet_Reader_Offline();

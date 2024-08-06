@@ -18,7 +18,6 @@
 
 #define SIZE_BUF 1000
 
-PJ_DEF(pj_ssize_t) pjsip_msg_print_user( const pjsip_msg *msg, char *buf, pj_size_t size, std::string&);
 
 // namespace
 namespace sip_parser {
@@ -78,20 +77,26 @@ class Sip_Parser {
 		std::map<Call_ID, Key_and_Sides>* get_sip_packets();
 		void clear_sip_packets();
 
+		PJ_DEF(pj_ssize_t) pjsip_msg_print_user( const pjsip_msg *msg, char *buf, pj_size_t size);
+
+
 	private:
 		void parsing(char *, long, long, std::string&, int);
 		void read_in_file(std::ofstream&, const std::vector<std::variant<Info_and_Sip_Packet, receive_type_msg>>&);
 		
+		PJ_DEF(pj_status_t) pjsua_sip_url_user(const char *c_url);
+		std::string template_selection(std::string& header_name, std::string& header, bool flag, std::string method);
+
 		packet_reader::Packet_Reader_Interface *pr_;
-		int len;
-		pjsip_msg *msg;
-	    pj_size_t msgsize;
+		static std::map<Call_ID, Key_and_Sides> sip_packets;
+
+		std::string method;
+
 	    pj_status_t status;
 		pj_caching_pool cp;
 		static pjsip_endpoint *sip_endpt;
 		pj_pool_t *pool;
 		pjsip_parser_err_report err;
-		static std::map<Call_ID, Key_and_Sides> sip_packets;
 };
 
 }

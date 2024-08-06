@@ -5,6 +5,7 @@
 #include <vector>
 #include <variant>
 #include <optional>
+#include <nlohmann/json-schema.hpp>
 
 namespace obj_config {
 
@@ -22,21 +23,32 @@ struct headers_and_option {
     option_name option;
 };
 
-class Obj_Config
-{
+class Obj_Config {
     public:
-            static Obj_Config& Instance(std::string path = "") {
-                static Obj_Config theSingleInstance(path);
-                return theSingleInstance;
+            Obj_Config& operator=(Obj_Config &&) = default;
+            static Obj_Config& Instance(std::string path_config = "", std::string path_schema = "") {
+                try {
+                    static Obj_Config theSingleInstance(path_config, path_schema);
+                    return theSingleInstance;
+                } catch (const char* error_message) {
+                    std::cerr << error_message << "\n";
+                    throw "Error Instance";
+                }
             }
             nlohmann::json* get_json();
             headers_and_option* get_headers_and_option();
+            void change_json_data(std::string&);
+            void Change_Obj_Config(std::string path_config = "", std::string path_schema = "") {
+                Instance() = Obj_Config(path_config, path_schema);
+            }
             
-    private:        
-            Obj_Config(std::string&);
+    protected:
+            Obj_Config(std::string&, std::string&);
             Obj_Config(const Obj_Config&) = delete;
             Obj_Config& operator=(const Obj_Config&) = delete;
             nlohmann::json json_data_;
+            nlohmann::json json_schema_;
+            nlohmann::json_schema::json_validator json_validator_;
             headers_and_option* head_and_option;
 };
 } // namespace
