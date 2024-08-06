@@ -6,9 +6,9 @@ int Packet_Reader_Offline::linkhdrlen = 0;
 
 //std::deque<std::unique_ptr<std::string>> Packet_Reader_Offline::packets;
 std::vector<std::unique_ptr<Info_and_Packet>> Packet_Reader_Offline::packets;
-int Packet_Reader_Offline::flag_is_prev = 1;
-long Packet_Reader_Offline::buf_prev_sec = 0;
-long Packet_Reader_Offline::buf_prev_usec = 0;
+// int Packet_Reader_Offline::flag_is_prev = 0;
+// long Packet_Reader_Offline::buf_prev_sec = 0;
+// long Packet_Reader_Offline::buf_prev_usec = 0;
 
 
 Packet_Reader_Offline::Packet_Reader_Offline(const std::string& name) {
@@ -68,18 +68,15 @@ void Packet_Reader_Offline::get_link_header_len(pcap_t* pcap)
     	}
 }
 void Packet_Reader_Offline::processing (int count) {
-	flag_is_prev = 1;
-	buf_prev_sec = 0;
-	buf_prev_usec = 0;
 	if (pcap_loop(pcap, count, packet_handler, (u_char*)this) == PCAP_ERROR)
 		std::cout << "pcap_loop failed: " << pcap_geterr(pcap) << "\n";
 }
 void Packet_Reader_Offline::packet_handler(u_char *user, const struct pcap_pkthdr *packethdr, const u_char *packetptr) {
 	Packet_Reader_Offline* p = (Packet_Reader_Offline*) user;
-	if (!flag_is_prev) {
-		buf_prev_sec = packethdr->ts.tv_sec;
-		buf_prev_usec = packethdr->ts.tv_usec;
-		flag_is_prev = 0;
+	if (!p->flag_is_prev) {
+		p->buf_prev_sec = packethdr->ts.tv_sec;
+		p->buf_prev_usec = packethdr->ts.tv_usec;
+		p->flag_is_prev = 1;
 	}
 
 	/* header->ts содержит время прибытия пакета */
@@ -98,7 +95,7 @@ void Packet_Reader_Offline::packet_handler(u_char *user, const struct pcap_pkthd
 	//printf("Время прибытия пакета: %s.%06ld\n", timestr, packethdr->ts.tv_usec);
 	//printf("A: %07ld; B: %07ld\n", packethdr->ts.tv_sec, packethdr->ts.tv_usec);
 	// Нынешние секунды отнимаются от предыдущих, сдвигаются на 1'000'000 для записи микросекунд и записывается разница нынешних микросекунд и предыдущих
-	long result = (packethdr->ts.tv_sec - buf_prev_sec)*1'000'000 + packethdr->ts.tv_usec - buf_prev_usec;
+	long result = (packethdr->ts.tv_sec - p->buf_prev_sec)*1'000'000 + packethdr->ts.tv_usec - p->buf_prev_usec;
 	//printf("Разница: %d.%06ld\n", result/1000000, result%1000000);
 	
 
@@ -193,7 +190,7 @@ void Packet_Reader_Offline::read_in_file(const std::string& name) {
 	out.open(name);
 	for (int it = 0; it != get_size(); ++it) {
 		packet_reader::Info_and_Packet* testmsg = get_packet(it); 
-		out << testmsg->packet;
+		out << testmsg->sec << "." << testmsg->usec << "\r\n" << testmsg->packet;
 	}
 	out.close();
 }
