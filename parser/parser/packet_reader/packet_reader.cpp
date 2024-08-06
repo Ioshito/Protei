@@ -4,12 +4,13 @@ namespace packet_reader{
 
 long buf_prev_sec = 0;
 long buf_prev_usec = 0;
-int flag = 1;
 
 int Packet_Reader_Offline::linkhdrlen = 0;
 
 //std::deque<std::unique_ptr<std::string>> Packet_Reader_Offline::packets;
 std::vector<std::unique_ptr<Info_and_Packet>> Packet_Reader_Offline::packets;
+int Packet_Reader_Offline::flag_is_prev = 1;
+
 
 Packet_Reader_Offline::Packet_Reader_Offline(const std::string& name) {
 	pcap = pcap_open_offline(name.c_str(), errbuf);
@@ -68,14 +69,15 @@ void Packet_Reader_Offline::get_link_header_len(pcap_t* pcap)
     	}
 }
 void Packet_Reader_Offline::processing (int count) {
+	flag_is_prev = 1;
 	if (pcap_loop(pcap, count, packet_handler, (u_char*)NULL) == PCAP_ERROR)
 		std::cout << "pcap_loop failed: " << pcap_geterr(pcap) << "\n";
 }
 void Packet_Reader_Offline::packet_handler(u_char *user, const struct pcap_pkthdr *packethdr, const u_char *packetptr) {
-	if (flag) {
+	if (!flag_is_prev) {
 		buf_prev_sec = packethdr->ts.tv_sec;
 		buf_prev_usec = packethdr->ts.tv_usec;
-		flag = 0;
+		flag_is_prev = 0;
 	}
 
 	/* header->ts содержит время прибытия пакета */

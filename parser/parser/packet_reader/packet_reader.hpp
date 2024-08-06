@@ -56,5 +56,7 @@ class Packet_Reader_Offline : public Packet_Reader_Interface {
 	    const uint8_t *packet;
 	    struct bpf_program fp;      /* hold compiled program     */
 		static std::vector<std::unique_ptr<Info_and_Packet>> packets;
+		static int flag_is_prev;
+
 };
 }
