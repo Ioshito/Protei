@@ -142,20 +142,41 @@ std::string Sip_Parser::template_selection(std::string& header_name, std::string
             result = "SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]";
         }
         if(header_name == "From:") {
-            result = "<sip:[$cgpn]@[local_ip]:[local_port]>;tag=uac[call_number]";
+            header.erase(header.begin() + header.find(';'), header.end());
+            int type = pjsua_sip_url_user(header.c_str());
+            switch(type) {
+                case 1:
+                    result = "<sip:[$cgpn]@[local_ip]:[local_port]>;tag=uac[call_number]";
+                    global_variables.insert("cgpn");
+                    break;
+                case 2:
+                    result = "<sip:[$cgpn]@[local_ip]:[local_port]>;tag=uac[call_number]";
+                    global_variables.insert("cgpn");
+                    break;
+                case 3:
+                    result = "<tel:[$cgpn]>";
+                    global_variables.insert("cgpn");
+                    break;
+                default:
+                    result = "ERROR";
+                    break;
+            }
         }
         if(header_name == "To:") {
             header.erase(header.begin() + header.find(';'), header.end());
             int type = pjsua_sip_url_user(header.c_str());
             switch(type) {
                 case 1:
-                    result = "<sip:[service]@[remote_ip]:[remote_port]>";
+                    result = "<sip:[$cdpn]@[remote_ip]:[remote_port]>";
+                    global_variables.insert("cdpn");
                     break;
                 case 2:
-                    result = "<sip:[service]@[remote_ip]:[remote_port]>";
+                    result = "<sip:[$cdpn]@[remote_ip]:[remote_port]>";
+                    global_variables.insert("cdpn");
                     break;
                 case 3:
-                    result = "<tel:[???]>";
+                    result = "<tel:[$cdpn]>";
+                    global_variables.insert("cdpn");
                     break;
                 default:
                     result = "ERROR";
@@ -303,7 +324,8 @@ PJ_DEF(pj_ssize_t) Sip_Parser::pjsip_msg_print_user( const pjsip_msg *msg,
                     std::string header_name = strtok(p, " ");
 
                     p += header_name.size();
-                    std::string header(p + 1, len); 
+                    std::string header(p + 1, len);
+                    header += '\0'; 
                     memset(p, 0, len - header_name.size()+1);
                     *p++ = ' ';
 
@@ -468,7 +490,7 @@ void Sip_Parser::parsing(char *packet_msg, long sec, long usec, std::string& ip,
 	}
 }
 
-void Sip_Parser::read_in_file(std::ofstream& out, const std::vector<std::variant<Info_and_Sip_Packet, receive_type_msg>>& vec) {
+void Sip_Parser::read_in_file(std::string& out, const std::vector<std::variant<Info_and_Sip_Packet, receive_type_msg>>& vec) {
 	// READ
     long buf_sec;
     bool flag = 0;
@@ -480,7 +502,7 @@ void Sip_Parser::read_in_file(std::ofstream& out, const std::vector<std::variant
                 sip_parser::Info_and_Sip_Packet iasp = std::get<0>(elem);
 
                 if (flag == 1) {
-                    out <<  "<pause milliseconds=\"" + toString((iasp.get_sec() - buf_sec) * 1000) + "\"/>\r\n";
+                    out +=  "<pause milliseconds=\"" + toString((iasp.get_sec() - buf_sec) * 1000) + "\"/>\r\n";
                 }
 
                 if (iasp.get_type_msg() == ACK) {
@@ -532,27 +554,32 @@ void Sip_Parser::read_in_file(std::ofstream& out, const std::vector<std::variant
                 }
                 result += " />\r\n";
             }
-            out << result; 
+            out += result; 
 		}
 }
 
 void Sip_Parser::read_in_files(const std::string& name) {
 	// READ
 	for (const auto& [call_id, key_and_sides] : sip_packets) {
+        std::string result_a, result_b;
         std::ofstream out_a, out_b;
-        out_a.open(toString(call_id.substr(9)) + "_A_side_" + name + ".xml");
-        out_a << begin_msg_sipp;
-    
-        out_b.open(toString(call_id.substr(9)) + "_B_side_" + name + ".xml");
-        out_b << begin_msg_sipp;
         
-		read_in_file(out_a, key_and_sides.a);
-		read_in_file(out_b, key_and_sides.b);
+        result_a += begin_msg_sipp;
+        result_b += begin_msg_sipp;
+        
+		read_in_file(result_a, key_and_sides.a);
+		read_in_file(result_b, key_and_sides.b);
 
-        out_a << end_msg_sipp;
+        result_a += end_msg_sipp;
+        result_b += end_msg_sipp;
+        
+        out_a.open(toString(call_id.substr(9)) + "_A_side_" + name + ".xml");
+        out_b.open(toString(call_id.substr(9)) + "_B_side_" + name + ".xml");
+
+        out_a << result_a;
+        out_b << result_b;
+
 	    out_a.close();
-
-        out_b << end_msg_sipp;
 	    out_b.close();
 	}
 }

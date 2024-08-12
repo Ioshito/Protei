@@ -15,6 +15,7 @@
 #include <malloc.h>
 #include <regex>
 #include <config/config.hpp>
+#include <unordered_set>
 
 #define SIZE_BUF 1000
 
@@ -82,7 +83,7 @@ class Sip_Parser {
 
 	private:
 		void parsing(char *, long, long, std::string&, int);
-		void read_in_file(std::ofstream&, const std::vector<std::variant<Info_and_Sip_Packet, receive_type_msg>>&);
+		void read_in_file(std::string&, const std::vector<std::variant<Info_and_Sip_Packet, receive_type_msg>>&);
 		
 		PJ_DEF(pj_status_t) pjsua_sip_url_user(const char *c_url);
 		std::string template_selection(std::string& header_name, std::string& header, bool flag, std::string method);
@@ -91,6 +92,7 @@ class Sip_Parser {
 		static std::map<Call_ID, Key_and_Sides> sip_packets;
 
 		std::string method;
+		std::unordered_set<std::string> global_variables;
 
 	    pj_status_t status;
 		pj_caching_pool cp;
