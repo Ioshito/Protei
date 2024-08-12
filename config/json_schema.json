@@ -1,0 +1,34 @@
+{
+	"title": "config",
+  	"description": "config for parsing",
+  	"type": "object",
+  	"properties": {
+		"headers_and_option": {
+			"type": "object",
+				"properties": {
+					"headers": {
+						"type": "array",
+							"items": {
+								"type": "object",
+									"properties": {
+										"name": {
+											"type": "string"
+										},
+										"value": {
+											"type": "string" 
+										}
+									},
+									"required": ["name"],
+									"additionalProperties": false
+							},
+							"minItems": 1
+					},
+					"option_name": {
+						"type": "boolean"
+					}
+				},
+				"required": ["headers", "option_name"]
+		}
+  	},
+	"required": ["headers_and_option"]
+}
